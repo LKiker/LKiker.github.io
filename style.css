@@ -1,0 +1,34 @@
+body {
+  font-family: "Inter", sans-serif;
+  color: #e0e0e0;
+  background-color: #0f0f10;
+  line-height: 1.6;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+h1, h2 {
+  color: #79b8ff;
+}
+
+a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  border-radius: 12px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+header, footer {
+  text-align: center;
+  margin-bottom: 2rem;
+}
