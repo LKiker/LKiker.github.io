@@ -4,42 +4,131 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Landrey Kiker – Graphics Portfolio</title>
+  <meta name="description" content="Computer Science Graduate • Specializing in Graphics Programming" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>Landrey Kiker</h1>
-    <p>Computer Science Graduate | Graphics & VR Developer</p>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="site-title">Landrey Kiker</h1>
+      <p class="site-tagline">Computer Science Graduate • Specializing in Graphics Programming</p>
+      <nav class="nav">
+        <a href="#about">About</a>
+        <a href="#skills">Skills</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
+        <a class="btn" href="assets/Landrey_Kiker_Resume.pdf" target="_blank" rel="noopener">Resume</a>
+      </nav>
+    </div>
   </header>
 
   <main>
-    <section>
-      <h2>MolecularLensAR (VR/AR)</h2>
-      <img src="assets/protein_vr.png" alt="MolecularLensAR VR Project" width="400" />
-      <p>Unity VR application visualizing protein structures (Meta SDK). Includes interactive chain/residue selection, quiz, and tutorials.</p>
-      <p><a href="https://github.com/LKiker/MolecularLensAR">GitHub Repo</a></p>
+    <section id="about" class="section">
+      <div class="container">
+        <h2>About Me</h2>
+        <p>
+          I’m a Computer Science graduate focused on real-time graphics, shaders, and interactive visualization.
+          I build visual experiences in Unity and am expanding into WebGL and C++ rendering pipelines.
+        </p>
+      </div>
     </section>
 
-    <section>
-      <h2>Unity URP Shader Showcase</h2>
-      <img src="assets/toon_shader.gif" alt="Toon Shader Demo" width="400" />
-      <p>Stylized shaders (Toon, Hologram, Dissolve, Water) displayed on a custom robot model. Built in Unity URP using ShaderGraph.</p>
-      <p><a href="https://github.com/LKiker/unity-shader-showcase">GitHub Repo</a></p>
+    <section id="skills" class="section section-alt">
+      <div class="container">
+        <h2>Skills</h2>
+        <div class="skills-grid">
+          <div>
+            <h3>Languages</h3>
+            <ul>
+              <li>C++</li>
+              <li>C#</li>
+              <li>JavaScript</li>
+              <li>Python</li>
+              <li>GLSL/HLSL</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Tools</h3>
+            <ul>
+              <li>Unity (URP, Shader Graph)</li>
+              <li>Blender</li>
+              <li>Meta Quest SDK</li>
+              <li>Git / GitHub</li>
+              <li>VS Code / Visual Studio</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Focus Areas</h3>
+            <ul>
+              <li>Real-Time Rendering</li>
+              <li>Shaders & Materials</li>
+              <li>VR/AR Interaction</li>
+              <li>Graphics Math</li>
+              <li>WebGL</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section>
-      <h2>Upcoming Projects</h2>
-      <ul>
-        <li>WebGL Shader Viewer – In progress</li>
-        <li>Software Rasterizer (C++ Rendering Pipeline) – November 2025</li>
-      </ul>
+    <section id="projects" class="section">
+      <div class="container">
+        <h2>Projects</h2>
+        <div class="projects-grid">
+          <article class="card">
+            <img src="assets/molecular_vr.png" alt="MolecularLensAR preview" />
+            <div class="card-body">
+              <h3>MolecularLensAR (VR/AR)</h3>
+              <p>Unity VR/AR application for visualizing molecular and protein structures (Meta SDK). Includes interactive chain/residue selection, SharedSpaces collaboration, and quiz tutorials.</p>
+              <p><a class="link" href="https://github.com/LKiker/MolecularLensAR" target="_blank" rel="noopener">GitHub Repo →</a></p>
+            </div>
+          </article>
+
+          <article class="card">
+            <img src="assets/shader_showcase.gif" alt="Unity URP Shader Showcase preview" />
+            <div class="card-body">
+              <h3>Unity URP Shader Showcase</h3>
+              <p>Stylized shaders (Toon, Hologram, Dissolve, Water) rendered on a custom robot model. Built in Unity URP using Shader Graph.</p>
+              <p><a class="link" href="https://github.com/LKiker/unity-shader-showcase" target="_blank" rel="noopener">GitHub Repo →</a></p>
+            </div>
+          </article>
+
+          <article class="card">
+            <img src="assets/webgl_viewer.png" alt="WebGL Shader Viewer preview" />
+            <div class="card-body">
+              <h3>WebGL Shader Viewer (In Progress)</h3>
+              <p>Browser-based viewer for real-time shader demos with lighting controls and model switching. Built with WebGL and GLSL.</p>
+              <p><a class="link" href="https://github.com/LKiker/WebGL-Shader-Viewer" target="_blank" rel="noopener">GitHub Repo →</a></p>
+            </div>
+          </article>
+
+          <article class="card">
+            <img src="assets/software_rasterizer.png" alt="Software Rasterizer preview" />
+            <div class="card-body">
+              <h3>Software Rasterizer (In Progress)</h3>
+              <p>CPU-based rendering pipeline in C++ implementing vertex transforms, projection, rasterization, depth buffering, and lighting.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="section section-alt">
+      <div class="container">
+        <h2>Contact</h2>
+        <p>
+          <a class="link" href="mailto:lkiker04@gmail.com">lkiker04@gmail.com</a> ·
+          <a class="link" href="https://linkedin.com/in/landreykiker" target="_blank" rel="noopener">LinkedIn</a> ·
+          <a class="link" href="https://github.com/LKiker" target="_blank" rel="noopener">GitHub</a>
+        </p>
+      </div>
     </section>
   </main>
 
-  <footer>
-    <p><a href="mailto:lkiker04@gmail.com">Email Me</a> | 
-       <a href="https://linkedin.com/in/landreykiker">LinkedIn</a> | 
-       <a href="https://github.com/LKiker">GitHub</a></p>
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2025 Landrey Kiker. All rights reserved.</p>
+    </div>
   </footer>
 </body>
 </html>
