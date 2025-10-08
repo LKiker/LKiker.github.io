@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <title>Landrey Kiker – Graphics Portfolio</title>
   <meta name="description" content="Computer Science Graduate • Specializing in Graphics Programming" />
   <link rel="stylesheet" href="style.css" />
@@ -18,6 +19,7 @@
         <a href="#skills">Skills</a>
         <a href="#projects">Projects</a>
         <a href="#contact">Contact</a>
+        <a href="#devlog">Dev Log</a>
         <a class="btn" href="assets/Landrey_Kiker_Resume.pdf" target="_blank" rel="noopener">Resume</a>
       </nav>
     </div>
@@ -26,10 +28,11 @@
   <main>
     <section id="about" class="section">
       <div class="container">
+        <img src="assets/profile.jpg" alt="Landrey Kiker" class="profile-pic">
         <h2>About Me</h2>
         <p>
-          I’m a Computer Science graduate focused on real-time graphics, shaders, and interactive visualization.
-          I build visual experiences in Unity and am expanding into WebGL and C++ rendering pipelines.
+          I’m a Computer Science graduate passionate about real-time graphics and interactive visualization. 
+          I enjoy building shaders, exploring GPU pipelines, and designing immersive VR experiences.
         </p>
       </div>
     </section>
@@ -51,7 +54,7 @@
           <div>
             <h3>Tools</h3>
             <ul>
-              <li>Unity (URP, Shader Graph)</li>
+              <li>Unity</li>
               <li>Blender</li>
               <li>Meta Quest SDK</li>
               <li>Git / GitHub</li>
@@ -65,9 +68,22 @@
               <li>Shaders & Materials</li>
               <li>VR/AR Interaction</li>
               <li>Graphics Math</li>
-              <li>WebGL</li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      <div class="tech-stack">
+        <h3>Tech Stack</h3>
+        <div class="badge-row">
+          <img src="assets/unity.svg" alt="Unity" title="Unity Engine">
+          <img src="assets/cpp.svg" alt="C++" title="C++">
+          <img src="assets/csharp.svg" alt="C#" title="C#">
+          <img src="assets/python.svg" alt="Python" title="Python">
+          <img src="assets/WebGL.svg" alt="WebGL" title="WebGL">
+          <!-- <img src="assets/OpenGL.svg" alt="OpenGL" title="OpenGL"> -->
+          <img src="assets/Blender.svg" alt="Blender" title="Blender">
+          <img src="assets/VisualStudio.svg" alt="Visual Studio" title="Visual Studio">
         </div>
       </div>
     </section>
@@ -86,7 +102,7 @@
           </article>
 
           <article class="card">
-            <img src="assets/shader_showcase.gif" alt="Unity URP Shader Showcase preview" />
+            <img src="assets/toon_shader.gif" alt="Unity URP Shader Showcase preview" />
             <div class="card-body">
               <h3>Unity URP Shader Showcase</h3>
               <p>Stylized shaders (Toon, Hologram, Dissolve, Water) rendered on a custom robot model. Built in Unity URP using Shader Graph.</p>
@@ -114,6 +130,34 @@
       </div>
     </section>
 
+    <!-- Embedded Development Log Section -->
+    <section id="devlog" class="section">
+      <div class="container">
+        <h2>Development Log</h2>
+        <div class="devlog-scroll">
+          <article class="post">
+            <h3>Building My First Software Rasterizer in C++</h3>
+            <p class="meta">In Progress • C++ • Rendering Pipeline</p>
+            <p>
+              asdf
+            </p>
+            <a class="link" href="https://github.com/LKiker/Software-Rasterizer" target="_blank">View Source →</a>
+          </article>
+
+          <article class="post">
+            <h3>How I Fixed Lighting in Unity URP Toon Shaders</h3>
+            <p class="meta">September 2025 • Unity • Shader Graph</p>
+            <p>
+              My specular highlight appeared on the shadowed side because I didn’t mask dot(N,L).
+              Multiplying the specular mask by the toon-lighting band fixed it,
+              keeping highlights only on the lit side.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+    <!-- end embedded dev log -->
+
     <section id="contact" class="section section-alt">
       <div class="container">
         <h2>Contact</h2>
@@ -131,5 +175,14 @@
       <p>© 2025 Landrey Kiker. All rights reserved.</p>
     </div>
   </footer>
+
+  <script>
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+    window.addEventListener("load", function() {
+      window.scrollTo(0, 0);
+    });
+  </script>
 </body>
 </html>
