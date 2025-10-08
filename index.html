@@ -187,5 +187,48 @@
       window.scrollTo(0, 0);
     });
   </script>
+
+  <script>
+  // Always start at top when loading or refreshing
+  window.onbeforeunload = function () {
+    window.scrollTo(0, 0);
+  };
+
+  const tagline = document.querySelector('.site-tagline');
+  const header = document.querySelector('.site-header');
+
+  // Hide tagline + shrink header when scrolled
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 20) {
+      tagline.classList.add('hidden');
+      header.classList.add('shrunk');
+    } else {
+      tagline.classList.remove('hidden');
+      header.classList.remove('shrunk');
+    }
+  });
+  </script>
+
+  <script>
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const target = document.querySelector(this.getAttribute('href'));
+      const header = document.querySelector('.site-header');
+      if (!target || !header) return;
+
+      const headerHeight = header.offsetHeight;
+      const targetPosition =
+        target.getBoundingClientRect().top + window.pageYOffset - headerHeight + 4;
+
+      window.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth'
+      });
+    });
+  });
+</script>
+
 </body>
 </html>

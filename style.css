@@ -1,101 +1,235 @@
-/* Dark minimalist portfolio styles */
-:root{
-  --bg:#0e0f12;
-  --bg-alt:#14161b;
-  --text:#e6e7eb;
-  --muted:#a9afbd;
-  --accent:#6aa9ff;
-  --card:#171a20;
-  --shadow:0 6px 24px rgba(0,0,0,.35);
-  --radius:16px;
+/* ===============================
+   Dark Minimalist Portfolio Theme
+   =============================== */
+:root {
+  --bg: #0e0f12;
+  --bg-alt: #14161b;
+  --text: #e6e7eb;
+  --muted: #a9afbd;
+  --accent: #6aa9ff;
+  --card: #171a20;
+  --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  --radius: 16px;
 }
 
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{
+* {
+  box-sizing: border-box;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+}
+body {
   font-family: 'Inter', sans-serif;
   background: var(--bg);
   color: var(--text);
-  line-height:1.7;
+  line-height: 1.7;
+}
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
-.container{max-width:1100px;margin:0 auto;padding:0 20px}
-
-.site-header{
-  padding:56px 0 24px;
+/* ===============================
+   Header
+   =============================== */
+.site-header {
+  padding: 56px 0 24px;
   background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,0));
-  border-bottom:1px solid rgba(255,255,255,.06);
-  position: sticky; top:0; backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(8px);
   z-index: 10;
 }
 
-.site-title{font-size:clamp(28px,4vw,40px);margin:0 0 6px}
-.site-tagline{margin:0 0 16px;color:var(--muted)}
-
-.nav{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
-.nav a{color:var(--text);text-decoration:none;opacity:.85}
-.nav a:hover{opacity:1;text-decoration:underline}
-.nav .btn{
-  background: var(--accent); color:#08111f; padding:10px 14px; border-radius:12px;
-  text-decoration:none; font-weight:600; box-shadow: var(--shadow);
+/* Tighten header layout when shrunk */
+.site-header {
+  transition: all 0.4s ease;
 }
 
-.section{padding:64px 0}
-.section-alt{background: var(--bg-alt)}
+.site-title {
+  font-size: clamp(28px, 4vw, 40px);
+  margin: 0 0 18px;
+  transition: all 0.4s ease;
+}
 
-h2{font-size:clamp(22px,3vw,30px);margin:0 0 18px}
-h3{margin:8px 0 10px}
+.site-header.shrunk .site-title {
+  font-size: clamp(20px, 3vw, 28px);
+  margin-bottom: 0;          /* 🔥 removes almost all vertical space */
+  transform: translateY(-6px);
+}
 
-.skills-grid{
-  display:grid; gap:20px;
+/* Reduce internal header padding (top/bottom) */
+.site-header:not(.shrunk) {
+  padding: 48px 0 20px;
+}
+.site-header.shrunk {
+  padding: 20px 0 8px;       /* 🔥 drastically tighter */
+}
+
+/* Bring nav closer */
+.nav {
+  transition: all 0.4s ease;
+  margin-top: 0;
+}
+.site-header:not(.shrunk) .nav {
+  margin-top: 12px;
+}
+.site-header.shrunk .nav {
+  margin-top: 0;
+  transform: translateY(-4px);
+}
+
+/* Tagline fade + collapse */
+.site-tagline {
+  margin: 0 0 18px;
+  padding-bottom: 4px;
+  color: var(--muted);
+  opacity: 1;
+  max-height: 40px;                /* approximate tagline height */
+  overflow: visible;
+  transition:
+    opacity 0.25s ease,
+    max-height 0.25s ease,
+    margin 0.25s ease;
+}
+
+.site-header.shrunk .site-tagline {
+  opacity: 0;
+  transform: translateY(-8px);
+  height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+
+.site-tagline.hidden {
+  opacity: 0;
+  max-height: 0;                   /* 🔥 removes the vertical space */
+  margin: 0;                       /* 🔥 collapses margin */
+  pointer-events: none;
+}
+
+
+/* Nav (desktop) */
+.nav {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.nav a {
+  color: var(--text);
+  text-decoration: none;
+  opacity: 0.85;
+}
+.nav a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+.nav .btn {
+  background: var(--accent);
+  color: #08111f;
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+/* ===============================
+   Sections
+   =============================== */
+.section {
+  padding: 64px 0;
+}
+.section-alt {
+  background: var(--bg-alt);
+}
+h2 {
+  font-size: clamp(22px, 3vw, 30px);
+  margin: 0 0 18px;
+}
+h3 {
+  margin: 8px 0 10px;
+}
+
+/* ===============================
+   Skills + Projects Grids
+   =============================== */
+.skills-grid {
+  display: grid;
+  gap: 20px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
-
-.projects-grid{
-  display:grid; gap:20px;
+.projects-grid {
+  display: grid;
+  gap: 20px;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
-.card{
+/* ===============================
+   Cards
+   =============================== */
+.card {
   background: var(--card);
   border: 1px solid rgba(255,255,255,.06);
   border-radius: var(--radius);
-  overflow:hidden; box-shadow: var(--shadow);
-  display:flex; flex-direction:column;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
-
 .card:hover {
   transform: translateY(-6px);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
   box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+.card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: #0b0c0f;
+}
+.card-body {
+  padding: 16px;
+}
+.link {
+  color: var(--accent);
+  text-decoration: none;
 }
 .link:hover {
   color: #89c2ff;
+  text-decoration: underline;
 }
 
-.card img{width:100%;height:180px;object-fit:cover;background:#0b0c0f}
-.card-body{padding:16px}
-.link{color:var(--accent);text-decoration:none}
-.link:hover{text-decoration:underline}
-
+/* ===============================
+   Animations + Scroll
+   =============================== */
 .section {
   opacity: 0;
   transform: translateY(20px);
   animation: fadeUp 0.6s ease forwards;
 }
 @keyframes fadeUp {
-  to { opacity: 1; transform: translateY(0); }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-
 html {
   scroll-behavior: smooth;
 }
 
+/* ===============================
+   Tech Stack
+   =============================== */
 .tech-stack {
   margin-top: 40px;
   text-align: center;
 }
-
 .badge-row {
   display: flex;
   flex-wrap: wrap;
@@ -103,85 +237,63 @@ html {
   gap: 18px;
   margin-top: 10px;
 }
-
 .badge-row img {
   width: 48px;
   height: 48px;
   filter: brightness(0.9);
   transition: transform 0.2s ease, filter 0.2s ease;
 }
-
 .badge-row img:hover {
   transform: scale(1.1);
   filter: brightness(1.2);
 }
 
-@media (max-width: 700px) {
-  .badge-row img {
-    width: 40px;
-    height: 40px;
-  }
+/* ===============================
+   Footer
+   =============================== */
+.site-footer {
+  padding: 40px 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+  color: var(--muted);
 }
-
-
-/* Prevent sticky header from covering anchor targets */
-:target {
-  scroll-margin-top: 200px; /* adjust if needed */
-}
-
-.site-footer{padding:40px 0;border-top:1px solid rgba(255,255,255,.06);color:var(--muted)}
 
 /* ===============================
-   Mobile optimization
+   About Section
    =============================== */
-@media (max-width: 700px) {
-  .site-header {
-    padding: 24px 0 12px; /* reduce vertical space */
-  }
-
-  :target {
-    scroll-margin-top: 360px; /* increase this until it aligns perfectly on mobile */
-  }
-
-  .site-title {
-    font-size: 26px; /* smaller name */
-    margin-bottom: 4px;
-  }
-
-  .site-tagline {
-    font-size: 14px; /* smaller subtitle */
-    margin-bottom: 12px;
-  }
-
-  .nav {
-    flex-direction: column; /* stack links vertically */
-    gap: 8px; /* smaller spacing */
-    align-items: flex-start;
-  }
-
-  .nav .btn {
-    padding: 8px 12px;
-    font-size: 14px;
-    border-radius: 8px;
-  }
-
-  /* Optional: tighten overall sections */
-  .section {
-    padding: 40px 0;
-  }
+.about-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  text-align: left;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.profile-pic {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  flex-shrink: 0;
+}
+.about-text {
+  max-width: 600px;
 }
 
-/* Devlog styling */
+/* ===============================
+   Dev Log Scroll Area
+   =============================== */
 .devlog-scroll {
-  max-height: 400px;       /* visible area */
-  overflow-y: auto;         /* scroll vertically */
+  max-height: 400px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding-right: 10px;      /* room for scrollbar */
+  padding-right: 10px;
   scrollbar-width: thin;
 }
-
 .devlog-scroll::-webkit-scrollbar {
   width: 6px;
 }
@@ -189,7 +301,6 @@ html {
   background: rgba(255,255,255,0.15);
   border-radius: 8px;
 }
-
 .post {
   background: var(--card);
   padding: 24px;
@@ -205,42 +316,132 @@ html {
   margin-top: 0;
 }
 
-
-/* About me styling */
-.about-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-  flex-wrap: wrap;       /* allows stacking on small screens */
-  text-align: left;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.profile-pic {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  flex-shrink: 0;
-}
-
-.about-text {
-  max-width: 600px;
-}
-
-/* mobile view - stacks vertically */
+/* ===============================
+   Mobile Optimization (max-width: 700px)
+   =============================== */
 @media (max-width: 700px) {
-  .about-section {
-    flex-direction: column;
+
+  /* Compact Header */
+  .site-header {
+    padding: 20px 0 12px;
+  }
+  .site-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+  .site-header p {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+
+  /* Two-column Nav Layout */
+  .nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 🔥 Equal width columns */
+    justify-items: center;          /* Center each link */
+    align-items: center;
+    gap: 8px 0;                     /* Small vertical spacing only */
     text-align: center;
   }
 
-  .profile-pic {
-    width: 90px;
-    height: 90px;
+  /* Row 1: About / Dev Log */
+  .nav a:nth-child(1) { grid-column: 1; grid-row: 1; }
+  .nav a:nth-child(4) { grid-column: 2; grid-row: 1; }
+
+  /* Row 2: Skills / Contact */
+  .nav a:nth-child(2) { grid-column: 1; grid-row: 2; }
+  .nav a:nth-child(5) { grid-column: 2; grid-row: 2; }
+
+  /* Row 3: Projects / Resume */
+  .nav a:nth-child(3) { grid-column: 1; grid-row: 3; }
+  .nav a:nth-child(6) { grid-column: 2; grid-row: 3; }
+
+  .nav a {
+    font-size: 0.95rem;
+    padding: 6px 10px;
+    display: block;
+    color: var(--text);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.2s ease, transform 0.2s ease;
   }
+
+  .nav a:hover {
+    background: rgba(255,255,255,0.05);
+    transform: translateY(-2px);
+  }
+
+  .nav .btn {
+    justify-self: center;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+  }
+
+
+  /* === Resume Button Glow Effect (shared) === */
+  .nav .btn {
+    background: var(--accent);
+    color: #08111f;
+    padding: 10px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 0 0 rgba(106,169,255,0);
+    transition:
+      box-shadow 0.3s ease,
+      transform 0.3s ease,
+      background 0.3s ease;
+  }
+
+.nav .btn:hover {
+  background: #7db8ff;
+  box-shadow: 0 0 12px rgba(106,169,255,0.6);
+  transform: translateY(-2px);
+}
+
+.nav .btn:active {
+  transform: translateY(0);
+  box-shadow: 0 0 6px rgba(106,169,255,0.4);
+}
+
+  /* Hover glow */
+  .nav .btn:hover {
+    box-shadow: 0 0 12px rgba(106,169,255,0.6);
+    transform: translateY(-2px);
+    background: #7db8ff; /* slightly brighter */
+  }
+
+
+    /* Smaller about section */
+    .about-section {
+      flex-direction: column;
+      text-align: center;
+    }
+    .profile-pic {
+      width: 90px;
+      height: 90px;
+    }
+
+    /* Smaller badges */
+    .badge-row img {
+      width: 40px;
+      height: 40px;
+    }
+
+    /* Tighten section spacing */
+    .section {
+      padding: 40px 0;
+    }
+  }
+
+/* Fade tagline visibility based on scroll */
+.site-tagline {
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+.site-tagline.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
