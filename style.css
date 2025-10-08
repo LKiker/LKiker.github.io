@@ -139,6 +139,10 @@ html {
     padding: 24px 0 12px; /* reduce vertical space */
   }
 
+  :target {
+    scroll-margin-top: 360px; /* increase this until it aligns perfectly on mobile */
+  }
+
   .site-title {
     font-size: 26px; /* smaller name */
     margin-bottom: 4px;
