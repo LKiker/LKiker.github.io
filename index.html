@@ -189,24 +189,41 @@
   </script>
 
   <script>
-  // Always start at top when loading or refreshing
-  window.onbeforeunload = function () {
-    window.scrollTo(0, 0);
-  };
+    // Always start at top when loading or refreshing
+    window.onbeforeunload = function () {
+      window.scrollTo(0, 0);
+    };
 
-  const tagline = document.querySelector('.site-tagline');
-  const header = document.querySelector('.site-header');
+    const tagline = document.querySelector('.site-tagline');
+    const header = document.querySelector('.site-header');
+    let headerShrunk = false;
 
-  // Hide tagline + shrink header when scrolled
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 20) {
-      tagline.classList.add('hidden');
-      header.classList.add('shrunk');
-    } else {
-      tagline.classList.remove('hidden');
-      header.classList.remove('shrunk');
+    function getScrollY() {
+      return Math.round(window.scrollY || window.pageYOffset);
     }
-  });
+
+    function handleScroll() {
+      const scrollY = getScrollY();
+      const isMobile = window.matchMedia("(max-width: 700px)").matches;
+
+      // Larger, cleaner thresholds for both platforms
+      const shrinkThreshold = isMobile ? 160 : 140;  // 📱 higher for mobile stability
+      const expandThreshold = isMobile ? 60 : 40;    // only un-shrink near top
+
+      if (!headerShrunk && scrollY > shrinkThreshold) {
+        tagline.classList.add('hidden');
+        header.classList.add('shrunk');
+        headerShrunk = true;
+      } 
+      else if (headerShrunk && scrollY < expandThreshold) {
+        tagline.classList.remove('hidden');
+        header.classList.remove('shrunk');
+        headerShrunk = false;
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll);
   </script>
 
   <script>
