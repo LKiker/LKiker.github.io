@@ -26,6 +26,7 @@
   </header>
 
   <main>
+    <!-- About me Section -->
     <section id="about" class="section">
     <div class="container about-section">
       <img src="assets/profile.jpg" alt="Landrey Kiker" class="profile-pic">
@@ -38,8 +39,9 @@
         </p>
       </div>
     </div>
-  </section>
+    </section>
 
+    <!-- Skills Section -->
     <section id="skills" class="section section-alt">
       <div class="container">
         <h2>Skills</h2>
@@ -91,42 +93,91 @@
       </div>
     </section>
 
+    <!-- Projects Section -->
     <section id="projects" class="section">
       <div class="container">
         <h2>Projects</h2>
         <div class="projects-grid">
-          <article class="card">
+
+          <!-- MolecularLensAR -->
+          <article class="card" data-link="https://github.com/LKiker/MolecularLensAR">
             <img src="assets/molecular_vr.png" alt="MolecularLensAR preview" />
             <div class="card-body">
               <h3>MolecularLensAR (VR/AR)</h3>
-              <p>Unity VR/AR application for visualizing molecular and protein structures using the user's hands. Includes interactive chain/residue selection, a structure quiz, and interactive tutorial.</p>
-              <p><a class="link" href="https://github.com/LKiker/MolecularLensAR" target="_blank" rel="noopener">GitHub Repo →</a></p>
+              <p>Unity VR/AR app for visualizing molecular structures interactively with chain and residue selection.</p>
+            </div>
+
+            <!-- 🔽 Hidden expanded content -->
+            <div class="card-expanded">
+              <div class="expanded-media">
+                <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" title="MolecularLensAR Demo" allowfullscreen></iframe>
+              </div>
+              <p>
+                MolecularLensAR is a Unity-based VR/AR visualization tool for exploring proteins and biomolecules.
+                Features include chain selection, residue highlighting, interactive quizzes, and an immersive tutorial.
+              </p>
+              <p>
+                <a class="link" href="https://github.com/LKiker/MolecularLensAR" target="_blank" rel="noopener">GitHub Repo →</a>
+              </p>
             </div>
           </article>
 
-          <article class="card">
+          <!-- Unity URP Shader Showcase-->
+          <article class="card" data-link="https://github.com/LKiker/unity-shader-showcase">
+            <!-- Default collapsed view -->
             <img src="assets/toon_shader.gif" alt="Unity URP Shader Showcase preview" />
             <div class="card-body">
               <h3>Unity URP Shader Showcase</h3>
-              <p>Stylized shaders (Toon, Hologram, Dissolve, Water) rendered on a custom robot model. Built in Unity URP using Shader Graph.</p>
-              <p><a class="link" href="https://github.com/LKiker/unity-shader-showcase" target="_blank" rel="noopener">GitHub Repo →</a></p>
+              <p>Stylized shaders (Toon, Hologram, Dissolve, Water) rendered on a custom robot model using Unity URP.</p>
+            </div>
+
+            <!-- Expanded content -->
+            <div class="card-expanded">
+              <h2 class="expanded-title">Unity URP Shader Showcase</h2>
+              <div class="expanded-media">
+                <img src="assets/toon_shader.gif" alt="Toon Shader Demo" />
+                <img src="assets/hologram_shader.gif" alt="Hologram Shader Demo" />
+                <img src="assets/water_shader.gif" alt="Water Shader Demo" />
+              </div>
+              <p>
+                This Unity URP showcase highlights multiple stylized shaders designed for real-time rendering —
+                demonstrating surface, transparency, and dissolve effects using Shader Graph.
+              </p>
+              <p>
+                <a class="link" href="https://github.com/LKiker/unity-shader-showcase" target="_blank" rel="noopener">GitHub Repo →</a>
+              </p>
             </div>
           </article>
 
-          <article class="card">
+
+          <!-- WebGL Shader Viewer -->
+          <article class="card" data-link="https://github.com/LKiker/WebGL-Shader-Viewer">
             <img src="assets/webgl_viewer.png" alt="WebGL Shader Viewer preview" />
             <div class="card-body">
               <h3>WebGL Shader Viewer (In Progress)</h3>
               <p>Browser-based viewer for real-time shader demos with lighting controls and model switching. Built with WebGL and GLSL.</p>
-              <p><a class="link" href="https://github.com/LKiker/WebGL-Shader-Viewer" target="_blank" rel="noopener">GitHub Repo →</a></p>
+            </div>
+
+            <div class="card-expanded">
+              <div class="expanded-media"></div>
+              <p>A lightweight browser viewer built with WebGL and GLSL, allowing real-time shader exploration and model visualization directly in the browser.</p>
+              <a class="link" href="https://github.com/LKiker/WebGL-Shader-Viewer" target="_blank" rel="noopener">GitHub Repo →</a>
             </div>
           </article>
 
-          <article class="card">
+
+          <!-- Software Rasterizer-->
+          <article class="card" data-link="https://github.com/LKiker/Software-Rasterizer">
             <img src="assets/software_rasterizer.png" alt="Software Rasterizer preview" />
             <div class="card-body">
               <h3>Software Rasterizer (In Progress)</h3>
               <p>CPU-based rendering pipeline in C++ implementing vertex transforms, projection, rasterization, depth buffering, and lighting.</p>
+            </div>
+
+            <div class="card-expanded">
+              <div class="expanded-media"></div>
+              <p>A fully CPU-driven renderer built from scratch in C++. Implements vertex transformation, projection, triangle rasterization, z-buffering, and lighting calculations. Demonstrates low-level graphics pipeline fundamentals.</p>
+              <a class="link" href="https://github.com/LKiker/Software-Rasterizer" target="_blank" rel="noopener">GitHub Repo →</a>
             </div>
           </article>
         </div>
@@ -227,25 +278,97 @@
   </script>
 
   <script>
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
-      e.preventDefault();
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
 
-      const target = document.querySelector(this.getAttribute('href'));
-      const header = document.querySelector('.site-header');
-      if (!target || !header) return;
+        const target = document.querySelector(this.getAttribute('href'));
+        const header = document.querySelector('.site-header');
+        if (!target || !header) return;
 
-      const headerHeight = header.offsetHeight;
-      const targetPosition =
-        target.getBoundingClientRect().top + window.pageYOffset - headerHeight + 4;
+        const headerHeight = header.offsetHeight;
+        const targetPosition =
+          target.getBoundingClientRect().top + window.pageYOffset - headerHeight + 4;
 
-      window.scrollTo({
-        top: targetPosition,
-        behavior: 'smooth'
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
       });
+    });
+  </script>
+
+<script>
+  const cards = document.querySelectorAll('.card');
+  const projectsGrid = document.querySelector('.projects-grid');
+
+  // Overlay element
+  const overlay = document.createElement('div');
+  overlay.className = 'project-overlay';
+  document.body.appendChild(overlay);
+
+  cards.forEach(card => {
+    const link = card.getAttribute('data-link');
+    let placeholder;
+
+    card.addEventListener('click', e => {
+      const isMobile = window.matchMedia("(max-width: 700px)").matches;
+      const isExpanded = card.classList.contains('expanded-desktop');
+
+      // 📱 On mobile: go directly to GitHub
+      if (isMobile && link) {
+        window.open(link, '_blank');
+        return;
+      }
+
+      // 🔹 Collapse if already open
+      if (isExpanded) {
+        collapseCard(card, placeholder);
+        return;
+      }
+
+      // 🔹 Close any other open card
+      document.querySelectorAll('.card.expanded-desktop').forEach(openCard => {
+        const ph = openCard._placeholder;
+        collapseCard(openCard, ph);
+      });
+
+      // 🔹 Create placeholder to preserve layout
+      placeholder = document.createElement('div');
+      placeholder.className = 'card-placeholder';
+      placeholder.style.width = `${card.offsetWidth}px`;
+      placeholder.style.height = `${card.offsetHeight}px`;
+      projectsGrid.insertBefore(placeholder, card);
+      card._placeholder = placeholder;
+
+      // 🔹 Expand the clicked card
+      card.classList.add('expanded-desktop');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      document.body.appendChild(card);
+    });
+  });
+
+  // 🔧 Collapse helper
+  function collapseCard(card, placeholder) {
+    card.classList.remove('expanded-desktop');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+
+    if (placeholder && placeholder.parentNode) {
+      placeholder.parentNode.insertBefore(card, placeholder);
+      placeholder.remove();
+    }
+  }
+
+  // 🔹 Clicking overlay closes expanded cards
+  overlay.addEventListener('click', () => {
+    document.querySelectorAll('.card.expanded-desktop').forEach(openCard => {
+      collapseCard(openCard, openCard._placeholder);
     });
   });
 </script>
 
+<div id="modal-root"></div>
 </body>
 </html>

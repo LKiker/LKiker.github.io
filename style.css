@@ -445,3 +445,198 @@ html {
   pointer-events: none;
 }
 
+/* ================================
+   Project Card Expansion (Simplified, No Blur)
+   ================================ */
+
+/* === Overlay (dim background only) === */
+.project-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);   /* slightly darker background */
+  z-index: 90;                       /* below the modal */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.project-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* === Expanded Card (Modal) === */
+.card.expanded-desktop {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 120;                      /* 🔥 ensure ABOVE overlay */
+  width: min(95vw, 1400px);
+  max-height: 90vh;
+  background: #1c1f26;               /* slightly lighter than background */
+  border-radius: 18px;
+  box-shadow: 0 0 60px rgba(0,0,0,0.9);
+  overflow-y: auto;
+  padding: 36px 32px;
+  animation: modalPop 0.3s ease;
+  color: var(--text);
+}
+
+/* Optional: make modal look more “spotlit” */
+.card.expanded-desktop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 24px rgba(255,255,255,0.03);
+  pointer-events: none;
+}
+
+
+/* Expanded Card — Larger, Centered, Portfolio-Filling (Fixed Contrast) */
+.card.expanded-desktop {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  width: min(95vw, 1400px);
+  max-height: 90vh;
+  background: #1b1d24;            /* ✅ slightly lighter than var(--card) */
+  border-radius: 18px;
+  box-shadow: 0 8px 60px rgba(0,0,0,0.75);
+  overflow-y: auto;
+  padding: 36px 32px;
+  animation: popIn 0.3s ease;
+  color: var(--text);
+  isolation: isolate;             /* ensures it layers cleanly above overlay */
+}
+
+/* Optional: subtly brighten its content */
+.card.expanded-desktop h3,
+.card.expanded-desktop h2 {
+  color: #f0f1f4;
+}
+
+
+/* Make content feel balanced on ultra-wide screens */
+@media (min-width: 1600px) {
+  .card.expanded-desktop {
+    width: 1300px;
+  }
+}
+
+
+@keyframes modalPop {
+  from {
+    transform: translate(-50%, -45%) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Expanded media layout — 3 portrait GIFs side by side */
+.expanded-media {
+  display: flex;
+  flex-wrap: wrap;               /* allow wrapping if screen too small */
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  margin: 28px auto 36px;
+  max-width: 1100px;
+  padding: 0 10px;
+}
+
+/* Portrait 4:5 GIFs */
+.expanded-media img {
+  width: 100%;
+  max-width: 260px;              /* balanced size for portrait ratio */
+  aspect-ratio: 4 / 5;           /* ✅ correct: taller than wide */
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 0 16px rgba(0,0,0,0.45);
+  flex: 0 0 auto;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.expanded-media img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 24px rgba(0,0,0,0.6);
+}
+
+/* Embedded video (for MolecularLensAR) */
+.expanded-media iframe,
+.expanded-media video {
+  width: 100%;
+  max-width: 900px;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  margin: 16px auto;
+}
+
+/* Responsive stacking for smaller screens */
+@media (max-width: 900px) {
+  .expanded-media {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }
+  .expanded-media img {
+    max-width: 90%;
+  }
+}
+
+
+/* Hide expanded content by default */
+.card-expanded {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Reveal only when expanded */
+.card.expanded-desktop .card-expanded {
+  display: block;
+  opacity: 1;
+}
+
+/* Hide normal collapsed content when expanded */
+.card.expanded-desktop .card-body {
+  display: none;
+}
+
+/* ✅ Hide the main thumbnail when expanded */
+.card.expanded-desktop > img {
+  display: none;
+}
+
+/* ✅ Style the expanded title (new header above media) */
+.expanded-title {
+  font-size: clamp(20px, 3vw, 28px);
+  margin: 0 0 16px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 8px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: all 0.3s ease;
+}
+
+/* Fade-in effect when expanded */
+.card.expanded-desktop .expanded-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Placeholder element (keeps layout stable) */
+.card-placeholder {
+  visibility: hidden;
+}
