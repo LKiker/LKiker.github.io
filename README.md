@@ -16,7 +16,7 @@ I build interactive experiences using Unity, Meta SDK, and C++, and I’m curren
 ## Featured Projects
 | Project | Description | Tech |
 |----------|--------------|------|
-| [ProteinLensAR](https://github.com/yourusername/ProteinLensAR) | Interactive VR/AR protein visualization with selection, tutorial, quiz system, and Meta SDK integration. | Unity, C#, Meta Quest SDK |
+| [MolecularLensAR](https://github.com/LKiker/MolecularLensAR) | Interactive VR/AR protein visualization with selection, tutorial, quiz system, and Meta SDK integration. | Unity, C#, Meta Quest SDK |
 | [Unity URP Shader Showcase](https://github.com/LKiker/unity-shader-showcase) | Stylized shaders (Toon, Dissolve, Hologram, Water) rendered on a custom model. | Unity URP, ShaderGraph |
 | WebGL Shader Viewer *(In Progress)* | Browser-based viewer for real-time shader demos with lighting controls. | JavaScript, WebGL, GLSL |
 | Software Rasterizer *(In Progress)* | CPU-based rendering pipeline written in C++ with z-buffer and lighting. | C++, Linear Algebra |
