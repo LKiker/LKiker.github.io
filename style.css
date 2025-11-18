@@ -563,6 +563,18 @@ html {
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
+/* Landscape GIF override (for ripple simulation) */
+.landscape-gif {
+  max-width: 100%;
+  width: 100%;
+  aspect-ratio: auto !important;
+  object-fit: contain !important;
+  height: auto !important;
+  border-radius: 12px;
+  box-shadow: 0 0 16px rgba(0,0,0,0.45);
+}
+
+
 .expanded-media img:hover {
   transform: scale(1.03);
   box-shadow: 0 0 24px rgba(0,0,0,0.6);
