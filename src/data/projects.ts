@@ -26,7 +26,7 @@ export const projects: Project[] = [
         title: "Molecular Lens AR",
         eyebrow: "01 - Unity Development",
         category: 'vr',
-        description: "mixed-reality educational tool built for the Meta Quest 3. It places a 3D protein model into the users physical environment and enables interactive learning through direct manipulation, click-into-model exploration, and a built-in multiple-choice quiz.",
+        description: "Mixed-reality educational tool built for the Meta Quest 3. It places a 3D protein model into the users physical environment and enables interactive learning through direct manipulation, click-into-model exploration, and a built-in multiple-choice quiz.",
         tags: [],
         links: {
             github: 'https://github.com/LKiker/MolecularLensAR',
@@ -34,6 +34,21 @@ export const projects: Project[] = [
         media: {
         },
         featured: true,
+    },
+        {
+        id: 'ripple-simulation',
+        order: 2,
+        title: "Ripple Simulation",
+        eyebrow: "02 - WebGL and Shaders",
+        category: 'web',
+        description: "Interactive 2D and 3D water ripple simulation built from scratch using WebGL. It visualizes real-time wave propagation on a heightmap and allows users to inject energy through mouse interaction, demonstrating core physics and real-time graphics concepts.",
+        tags: [],
+        links: {
+            github: 'https://github.com/LKiker/ripple-simulation',
+        },
+        media: {
+        },
+        featured: false,
     },
   // ...
 ];
