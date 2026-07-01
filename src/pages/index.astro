@@ -1,14 +1,23 @@
 ---
+import Layout from "../layouts/Layout.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import { projects } from '../data/projects';
 
+const pageTitle= "Portfolio"
 ---
+<Layout pageTitle={pageTitle}>
+    <div style="height: 100vh;">
+        <h1> Landrey Kiker </h1>
+        <h2> Web Developer </h2>
+        <p> 
+            I build for the web, in VR, and soon in
+            the physical world, chasing the same curiosity that
+            keeps me staring into aquariums.
+        </p>    
+        <a href="/simple/">Simple View</a>
+    </div>
 
-<h1> Landrey Kiker </h1>
-<h2> Web Developer </h2>
-<p> 
-    I build for the web, in VR, and soon in
-    the physical world, chasing the same curiosity that
-    keeps me staring into aquariums.
-</p>    
-<a href="/dive/">Dive in</a>
-<br />
-<a href="/simple/">Skip the dive</a>
+    {projects.map((project) => (
+        <ProjectCard project={project} />
+    ))}
+</Layout>

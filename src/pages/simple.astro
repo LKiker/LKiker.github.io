@@ -1,11 +1,13 @@
 ---
-import Footer from "../components/Footer.astro";
+import Layout from "../layouts/Layout.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 import { projects } from '../data/projects';
- ---
- 
-{projects.map((project) => (
-    <ProjectCard project={project} />
-))}
 
-<Footer />
+const pageTitle = "Simple View"
+---
+
+<Layout pageTitle={pageTitle}>
+    {projects.map((project) => (
+        <ProjectCard project={project} />
+    ))}
+</Layout>

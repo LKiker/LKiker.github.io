@@ -27,32 +27,112 @@ const { title, eyebrow, description, tags, links, media } = project;
     ) : (
       <div class="media-placeholder" aria-hidden="true"></div>
     )}
-  </div>
 
-  <div class="card-content">
-    <p class="eyebrow">{eyebrow}</p>
-    <h3 class="title">{title}</h3>
-    <p class="description">{description}</p>
+    <div class="card-content">
+      <p class="eyebrow">{eyebrow}</p>
+      <h3 class="title">{title}</h3>
+      <p class="description">{description}</p>
 
-    {tags.length > 0 && (
-      <ul class="tags">
-        {tags.map((tag) => (
-          <li class="tag">{tag}</li>
-        ))}
-      </ul>
-    )}
-
-    <div class="links">
-      {links.github && (
-        <a class="link" href={links.github} target="_blank" rel="noopener noreferrer">
-          View on GitHub →
-        </a>
+      {tags.length > 0 && (
+        <ul class="tags">
+          {tags.map((tag) => (
+            <li class="tag">{tag}</li>
+          ))}
+        </ul>
       )}
-      {links.live && (
-        <a class="link" href={links.live} target="_blank" rel="noopener noreferrer">
-          View live →
-        </a>
-      )}
+
+      <div class="links">
+        {links.github && (
+          <a class="link" href={links.github} target="_blank" rel="noopener noreferrer">
+            View on GitHub →
+          </a>
+        )}
+        {links.live && (
+          <a class="link" href={links.live} target="_blank" rel="noopener noreferrer">
+            View live →
+          </a>
+        )}
+      </div>
     </div>
   </div>
 </article>
+
+<style>
+    .project-card {
+        height: 100vh;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 2rem;
+        box-sizing: border-box;
+        border-bottom: 1px solid #eee; /* optional: visual separation between cards */
+    }
+
+    .media-frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        max-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    .project-video,
+    .project-poster {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .media-placeholder {
+        width: 100%;
+        height: 100%;
+        background: #f0f0f0;
+        border-radius: 8px;
+    }
+
+    .card-content {
+        position: absolute;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        max-width: 380px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1.25rem 1.5rem;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(6px);
+        color: #fff;
+        border-radius: 8px;
+    }
+
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        list-style: none;
+        padding: 0;
+        margin: 0.5rem 0;
+    }
+
+    .tag {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.6rem;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 999px;
+    }
+
+    .links {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .link {
+        color: #fff;
+    }
+</style>
