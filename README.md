@@ -1,2 +1,6 @@
-# LKiker.github.io
-Personal Portfolio
+# Portfolio
+
+Personal Portfolio site in progress
+
+**Stack:** Astro
+**Status:** Building underwater descent concept.
