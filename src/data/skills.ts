@@ -8,7 +8,7 @@ export const skillCategories: SkillCategory[] = [
     {
         id: 'languages',
         label: 'Languages',
-        skills: ['TypeScript', 'C#', 'Python'],
+        skills: ['TypeScript', 'C#', 'Python', 'C', 'C++'],
     },
     {
         id: 'frameworks',

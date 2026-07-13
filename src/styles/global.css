@@ -1,8 +1,110 @@
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 html {
-  background: linear-gradient(to bottom,
-    #EAFBF6 0%,
-    #79DCC6 20%,
-    #1E7E78 45%,
-    #082630 75%,
-    #04141A 100%);
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    font-family: var(--font-body);
+    color: var(--color-surface-text);
+    line-height: 1.5;
+}
+
+img,
+video {
+    display: block;
+    max-width: 100%;
+}
+
+a {
+    color: inherit;
+}
+
+/* ---------- Design tokens ---------- */
+:root {
+    /* Type */
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+
+    /* Ocean depth palette, light to dark */
+    --color-surface-aqua: #cdeef0;
+    --color-shallow: #4fa8b8;
+    --color-mid-water: #1c5c72;
+    --color-deep: #0a1f2e;
+    --color-abyss: #04101a;
+
+    /* Text + accent */
+    --color-surface-text: #eaf6f6;
+    --color-muted-text: #a9c4cc;
+    --color-accent: #5eead4;
+    --color-accent-dim: #3fb8a8;
+
+    /* ...existing tokens... */
+    --color-ink: #0a2e33;
+    --color-ink-muted: #35606a;
+}
+
+/* ---------- Ocean background wrapper ---------- */
+.ocean {
+    background: linear-gradient(
+        180deg,
+        var(--color-surface-aqua) 0%,
+        var(--color-shallow) 20%,
+        var(--color-mid-water) 45%,
+        var(--color-deep) 70%,
+        var(--color-abyss) 100%
+    );
+    background-attachment: scroll;
+    min-height: 100vh;
+}
+
+/* For pages entered mid-dive (e.g. /projects/) — skips the surface bands
+   so the page doesn't jarringly re-surface after the hero's descent. */
+.ocean--continued {
+    background: linear-gradient(
+        180deg,
+        var(--color-mid-water) 0%,
+        var(--color-deep) 40%,
+        var(--color-abyss) 100%
+    );
+    background-attachment: scroll;
+    min-height: 100vh;
+}
+
+/* For pages that are just the surface/hero — subtle depth cue only,
+   no rush toward mid-water or abyss within one viewport height. */
+.ocean--surface {
+    background: linear-gradient(
+        180deg,
+        var(--color-surface-aqua) 0%,
+        var(--color-shallow) 100%
+    );
+    background-attachment: scroll;
+    min-height: 100vh;
+    color: var(--color-ink);
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

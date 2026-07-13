@@ -1,0 +1,55 @@
+---
+import type { SkillCategory as SkillCategoryType } from '../data/skills';
+
+interface Props {
+  category: SkillCategoryType;
+}
+
+const { category } = Astro.props;
+const { label, skills } = category;
+---
+
+<div class="skill-category">
+  <h3 class="label">{label}</h3>
+
+  {skills.length > 0 && (
+    <ul class="skill-list">
+      {skills.map((skill) => (
+        <li class="skill">{skill}</li>
+      ))}
+    </ul>
+  )}
+</div>
+
+<style>
+  .skill-category {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+    color: inherit;
+  }
+
+  .skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .skill {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.7rem;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 999px;
+  }
+</style>

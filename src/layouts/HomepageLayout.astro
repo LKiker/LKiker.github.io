@@ -1,5 +1,4 @@
 ---
-import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 const { pageTitle } = Astro.props;
 ---
@@ -15,9 +14,8 @@ const { pageTitle } = Astro.props;
     <title>{pageTitle}</title>
   </head>
   <body>
-    <div class="ocean ocean--continued">
+    <div class="ocean ocean--surface">
       <slot />
-      <Footer />
     </div>
   </body>
 </html>
