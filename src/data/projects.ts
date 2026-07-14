@@ -1,3 +1,6 @@
+import testVideo from "../assets/videos/6804128-uhd_4096_2160_25fps.mp4";
+import testPoster from "../assets/images/Screenshot 2026-07-13 155455.png?url";
+
 export interface Project {
     id: string;                // slug, used for routing/anchors if needed
     order: number;              // explicit ordering, decoupled from array position
@@ -32,6 +35,8 @@ export const projects: Project[] = [
             github: 'https://github.com/LKiker/MolecularLensAR',
         },
         media: {
+            video: testVideo,
+            poster: testPoster,
         },
         featured: true,
     },

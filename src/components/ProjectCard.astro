@@ -82,10 +82,23 @@ const { title, eyebrow, description, tags, links, media } = project;
 
     .project-video,
     .project-poster {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 8px;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+
+      --fade-inner: 55%;
+      --fade-outer: 80%;
+
+      -webkit-mask-image: radial-gradient(
+        ellipse farthest-side at center,
+        black var(--fade-inner),
+        transparent var(--fade-outer)
+      );
+      mask-image: radial-gradient(
+        ellipse farthest-side at center,
+        black var(--fade-inner),
+        transparent var(--fade-outer)
+      );
     }
 
     .media-placeholder {
