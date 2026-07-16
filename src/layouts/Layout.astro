@@ -1,5 +1,8 @@
 ---
 import Footer from '../components/Footer.astro';
+import OceanBackground from '../components/OceanBackground.astro';
+import OceanParticles from '../components/OceanParticles.astro';
+import ParallaxController from '../components/ParallaxController.astro';
 import '../styles/global.css';
 const { pageTitle } = Astro.props;
 ---
@@ -15,9 +18,12 @@ const { pageTitle } = Astro.props;
     <title>{pageTitle}</title>
   </head>
   <body>
-    <div class="ocean ocean--continued">
+    <OceanBackground />
+    <div class="ocean">
+      <OceanParticles />
       <slot />
       <Footer />
     </div>
+    <ParallaxController />
   </body>
 </html>

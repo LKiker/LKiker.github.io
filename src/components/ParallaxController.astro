@@ -1,0 +1,76 @@
+---
+// ParallaxController.astro
+// Central scroll-driven animation controller. Wraps all GSAP/ScrollTrigger
+// setup in gsap.matchMedia() so prefers-reduced-motion is respected from
+// the start rather than retrofitted later.
+---
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { beginHold, endHold } from '../scripts/scrollState';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  gsap.matchMedia().add(
+    {
+      reduceMotion: '(prefers-reduced-motion: reduce)',
+      motionOK: '(prefers-reduced-motion: no-preference)',
+    },
+    (context) => {
+      const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+
+      if (reduceMotion) {
+        gsap.set('.project-video, .project-poster, .media-placeholder', {
+          filter: 'blur(0px)',
+        });
+        gsap.set('.card-content', { opacity: 1, y: 0 });
+        return;
+      }
+
+      // --- Generic content parallax (opt-in via data-parallax-depth) ---
+      const parallaxEls = document.querySelectorAll<HTMLElement>('[data-parallax-depth]');
+
+      parallaxEls.forEach((el) => {
+        const depth = parseFloat(el.dataset.parallaxDepth || '0.2');
+        const distance = 60 * depth;
+
+        gsap.fromTo(
+          el,
+          { y: -distance },
+          {
+            y: distance,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: el,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: true,
+            },
+          }
+        );
+      });
+
+      // --- Project card center-hold pin ---
+      // Freezes each card at viewport center for HOLD_DISTANCE px of scroll,
+      // pausing anything that reads getVirtualScrollY() (e.g. the depth gauge)
+      // for the same span. Add your own scrub-linked timeline here later for
+      // in-hold animations.
+      const projectCards = document.querySelectorAll<HTMLElement>('.project-card');
+
+      projectCards.forEach((card) => {
+        const HOLD_DISTANCE = 600; // px of scroll input consumed while held — tune this
+
+        ScrollTrigger.create({
+          trigger: card,
+          start: 'center center',
+          end: `+=${HOLD_DISTANCE}`,
+          pin: true,
+          onEnter: () => beginHold(),
+          onLeave: () => endHold(HOLD_DISTANCE),
+          onEnterBack: () => beginHold(),
+          onLeaveBack: () => endHold(HOLD_DISTANCE),
+        });
+      });
+    }
+  );
+</script>

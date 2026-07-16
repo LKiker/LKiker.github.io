@@ -1,16 +1,16 @@
 ---
-import HomepageLayout from "../layouts/HomepageLayout.astro";
+import Layout from "../layouts/Layout.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import DepthGauge from "../components/DepthGauge.astro";
+import { projects } from '../data/projects';
 
 const pageTitle = "Portfolio"
 ---
-<HomepageLayout pageTitle={pageTitle}>
+<Layout pageTitle={pageTitle}>
+    <DepthGauge />
+
     <div class="hero">
         <a href="/simple/" class="simple-view-link">simple view</a>
-
-        <div class="depth-readout">
-            <span class="depth-label">depth</span>
-            <span class="depth-value">0.0<span class="depth-unit">m</span></span>
-        </div>
 
         <div class="hero-content">
             <h1>Landrey Kiker</h1>
@@ -21,10 +21,16 @@ const pageTitle = "Portfolio"
                 keeps me staring into aquariums.
             </p>
         </div>
-
-        <a href="/projects/" class="dive-link">dive into projects →</a>
     </div>
-</HomepageLayout>
+
+    <div class="projects-page">
+        <div class="projects-list">
+            {projects.map((project) => (
+                <ProjectCard project={project} />
+            ))}
+        </div>
+    </div>
+</Layout>
 
 <style>
     .hero {
@@ -42,7 +48,7 @@ const pageTitle = "Portfolio"
     .simple-view-link {
         position: absolute;
         top: 1.5rem;
-        right: 1.5rem;
+        left: 1.5rem;
         font-family: var(--font-mono);
         font-size: 0.7rem;
         letter-spacing: 0.06em;
@@ -55,32 +61,6 @@ const pageTitle = "Portfolio"
     .simple-view-link:hover {
         opacity: 1;
         color: var(--color-ink);
-    }
-
-    .depth-readout {
-        position: absolute;
-        top: 1.5rem;
-        left: 1.5rem;
-        font-family: var(--font-mono);
-        color: var(--color-accent);
-        letter-spacing: 0.06em;
-        text-align: left;
-    }
-
-    .depth-label {
-        display: block;
-        font-size: 0.6rem;
-        opacity: 0.6;
-        text-transform: uppercase;
-    }
-
-    .depth-value {
-        font-size: 1.1rem;
-        font-weight: 500;
-    }
-
-    .depth-unit {
-        font-size: 0.7rem;
     }
 
     .hero-content {
@@ -113,21 +93,23 @@ const pageTitle = "Portfolio"
         margin: 0;
     }
 
-    .dive-link {
-        display: inline-block;
-        margin-top: 2rem;
-        font-family: var(--font-mono);
-        font-size: 0.8rem;
-        letter-spacing: 0.08em;
-        padding: 0.75rem 1.6rem;
-        border-radius: 999px;
-        text-decoration: none;
-        color: var(--color-abyss);
-        background: var(--color-accent);
-        transition: transform 0.2s ease;
+    .projects-page {
+        max-width: 80%;
+        margin: 0 auto;
+        padding: 4rem 1.5rem;
     }
 
-    .dive-link:hover {
-        transform: scale(1.05);
+    .projects-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .project-card {
+        margin-bottom: 60vh; /* buffer so the previous card fully clears before the next arrives */
+    }
+
+    .project-card:last-child {
+        margin-bottom: 0;
     }
 </style>

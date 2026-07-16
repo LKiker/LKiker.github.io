@@ -6,12 +6,11 @@ interface Props {
 }
 
 const { project } = Astro.props;
-const { title, eyebrow, description, tags, links, media } = project;
+const { title, description, tags, links, media } = project;
 ---
 
 <article class="project-card" data-project-id={project.id} data-category={project.category}>
     <div class="card-content">
-        <p class="eyebrow">{eyebrow}</p>
         <h3 class="title">{title}</h3>
         <p class="description">{description}</p>
 

@@ -1,0 +1,139 @@
+---
+// Ambient depth layers for the .ocean background. Each layer is tagged
+// with data-depth so a later parallax script can transform them at
+// different scroll-multipliers (e.g. translateY(scrollY * depth)).
+// Higher depth = moves more = reads as "closer" to the viewer.
+
+interface Particle {
+  cx: number;
+  cy: number;
+  r: number;
+}
+
+function generateParticles(count: number, seed: number): Particle[] {
+  const particles: Particle[] = [];
+  let s = seed;
+  const rand = () => {
+    // simple deterministic pseudo-random so SSR output is stable
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      cx: rand() * 100,
+      cy: rand() * 100,
+      r: 0.5 + rand() * 1.5,
+    });
+  }
+  return particles;
+}
+
+// Far layer: small, dense, low contrast — barely moves under parallax
+const farParticles = generateParticles(60, 17);
+// Mid layer: medium size/density
+const midParticles = generateParticles(30, 42);
+// Near layer: fewer, larger, more visible — moves the most under parallax
+const nearParticles = generateParticles(14, 99);
+---
+
+<div class="ocean-particles" aria-hidden="true">
+  <svg class="particle-layer" data-depth="0.1" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    {farParticles.map((p) => (
+      <circle cx={p.cx} cy={p.cy} r={p.r * 0.4} class="particle particle--far" />
+    ))}
+  </svg>
+
+  <svg class="particle-layer" data-depth="0.3" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    {midParticles.map((p) => (
+      <circle cx={p.cx} cy={p.cy} r={p.r * 0.6} class="particle particle--mid" />
+    ))}
+  </svg>
+
+  <svg class="particle-layer" data-depth="0.6" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    {nearParticles.map((p) => (
+      <circle cx={p.cx} cy={p.cy} r={p.r} class="particle particle--near" />
+    ))}
+  </svg>
+
+  <svg class="grain-overlay" aria-hidden="true">
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
+      <feColorMatrix type="saturate" values="0" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#grain)" />
+  </svg>
+</div>
+
+<style>
+  .ocean-particles {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .particle-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .particle {
+    fill: var(--color-surface-text);
+  }
+
+  .particle--far {
+    opacity: 0.15;
+  }
+
+  .particle--mid {
+    opacity: 0.25;
+  }
+
+  .particle--near {
+    opacity: 0.35;
+  }
+
+  .grain-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+  }
+</style>
+
+<script>
+  import { getVirtualScrollY } from '../scripts/scrollState';
+
+  const layers = document.querySelectorAll<HTMLElement>('.particle-layer');
+  let ticking = false;
+
+  function updateParticles() {
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? getVirtualScrollY() / docHeight : 0;
+
+    layers.forEach((layer) => {
+      const depth = parseFloat(layer.dataset.depth || '0.3');
+      const maxShiftPercent = 40 * depth;
+      // progress goes 0 -> 1 down the page; map that to -max -> +max
+      const shift = (1 - progress * 2) * maxShiftPercent;
+      layer.style.transform = `translateY(${shift}%)`;
+    });
+
+    ticking = false;
+  }
+
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(updateParticles);
+      ticking = true;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  updateParticles();
+</script>

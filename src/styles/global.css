@@ -55,42 +55,7 @@ a {
 
 /* ---------- Ocean background wrapper ---------- */
 .ocean {
-    background: linear-gradient(
-        180deg,
-        var(--color-surface-aqua) 0%,
-        var(--color-shallow) 20%,
-        var(--color-mid-water) 45%,
-        var(--color-deep) 70%,
-        var(--color-abyss) 100%
-    );
-    background-attachment: scroll;
     min-height: 100vh;
-}
-
-/* For pages entered mid-dive (e.g. /projects/) — skips the surface bands
-   so the page doesn't jarringly re-surface after the hero's descent. */
-.ocean--continued {
-    background: linear-gradient(
-        180deg,
-        var(--color-mid-water) 0%,
-        var(--color-deep) 40%,
-        var(--color-abyss) 100%
-    );
-    background-attachment: scroll;
-    min-height: 100vh;
-}
-
-/* For pages that are just the surface/hero — subtle depth cue only,
-   no rush toward mid-water or abyss within one viewport height. */
-.ocean--surface {
-    background: linear-gradient(
-        180deg,
-        var(--color-surface-aqua) 0%,
-        var(--color-shallow) 100%
-    );
-    background-attachment: scroll;
-    min-height: 100vh;
-    color: var(--color-ink);
 }
 
 /* ---------- Reduced motion ---------- */

@@ -1,0 +1,65 @@
+---
+---
+<div class="ocean-bg-viewport" aria-hidden="true">
+  <div id="ocean-bg-layer" class="ocean-bg-layer"></div>
+</div>
+
+<style>
+  .ocean-bg-viewport {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .ocean-bg-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(
+      180deg,
+      var(--color-surface-aqua) 0%,
+      var(--color-shallow) 20%,
+      var(--color-mid-water) 45%,
+      var(--color-deep) 70%,
+      var(--color-abyss) 100%
+    );
+    will-change: transform;
+  }
+</style>
+
+<script>
+  import { getVirtualScrollY } from '../scripts/scrollState';
+
+  const layer = document.getElementById('ocean-bg-layer');
+  let ticking = false;
+
+  function resizeLayer() {
+    if (!layer) return;
+    // Match the gradient's height to the full document height, same as
+    // the old background-attachment: scroll behavior covered.
+    layer.style.height = `${document.documentElement.scrollHeight}px`;
+  }
+
+  function updateBackground() {
+    if (!layer) return;
+    const y = getVirtualScrollY();
+    layer.style.transform = `translateY(-${y}px)`;
+    ticking = false;
+  }
+
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(updateBackground);
+      ticking = true;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', resizeLayer);
+
+  resizeLayer();
+  updateBackground();
+</script>

@@ -1,0 +1,145 @@
+---
+---
+<div class="depth-gauge">
+  <span class="depth-label">depth</span>
+  <span class="depth-value"><span id="depth-number">0.0</span><span class="depth-unit">m</span></span>
+</div>
+
+<style>
+  .depth-gauge {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 50;
+    font-family: var(--font-mono);
+    color: var(--depth-color, var(--color-ink));
+    letter-spacing: 0.06em;
+    text-align: right;
+    pointer-events: none;
+  }
+
+  .depth-label {
+    display: block;
+    font-size: 0.6rem;
+    opacity: 0.6;
+    text-transform: uppercase;
+  }
+
+  .depth-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+
+  .depth-unit {
+    font-size: 0.7rem;
+  }
+</style>
+
+<script>
+  import { getVirtualScrollY } from '../scripts/scrollState';
+
+  const MAX_DEPTH = 3682; // aesthetic scale mapped across full page scroll
+
+  // Mirrors .ocean gradient stops in global.css.
+  const BG_STOPS: { stop: number; color: { r: number; g: number; b: number } }[] = [
+    { stop: 0.00, color: { r: 0xcd, g: 0xee, b: 0xf0 } }, // --color-surface-aqua
+    { stop: 0.20, color: { r: 0x4f, g: 0xa8, b: 0xb8 } }, // --color-shallow
+    { stop: 0.45, color: { r: 0x1c, g: 0x5c, b: 0x72 } }, // --color-mid-water
+    { stop: 0.70, color: { r: 0x0a, g: 0x1f, b: 0x2e } }, // --color-deep
+    { stop: 1.00, color: { r: 0x04, g: 0x10, b: 0x1a } }, // --color-abyss
+  ];
+
+  const COLOR_INK    = { r: 0x0a, g: 0x2e, b: 0x33 }; // --color-ink
+  const COLOR_ACCENT = { r: 0x5e, g: 0xea, b: 0xd4 }; // --color-accent
+
+  const numberEl = document.getElementById('depth-number');
+  const gaugeEl = document.querySelector('.depth-gauge') as HTMLElement | null;
+  let ticking = false;
+
+  function lerp(a: number, b: number, t: number) {
+    return a + (b - a) * t;
+  }
+
+  function lerpColor(
+    c1: { r: number; g: number; b: number },
+    c2: { r: number; g: number; b: number },
+    t: number
+  ) {
+    return {
+      r: lerp(c1.r, c2.r, t),
+      g: lerp(c1.g, c2.g, t),
+      b: lerp(c1.b, c2.b, t),
+    };
+  }
+
+  function getBackgroundColorAt(progress: number) {
+    for (let i = 0; i < BG_STOPS.length - 1; i++) {
+      const a = BG_STOPS[i];
+      const b = BG_STOPS[i + 1];
+      if (progress >= a.stop && progress <= b.stop) {
+        const localT = (progress - a.stop) / (b.stop - a.stop || 1);
+        return lerpColor(a.color, b.color, localT);
+      }
+    }
+    return BG_STOPS[BG_STOPS.length - 1].color;
+  }
+
+  function relativeLuminance({ r, g, b }: { r: number; g: number; b: number }) {
+    const [rs, gs, bs] = [r, g, b].map((c) => {
+      const cNorm = c / 255;
+      return cNorm <= 0.03928 ? cNorm / 12.92 : Math.pow((cNorm + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+  }
+
+  function contrastRatio(l1: number, l2: number) {
+    const lighter = Math.max(l1, l2);
+    const darker = Math.min(l1, l2);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  function updateDepth() {
+    const scrollTop = getVirtualScrollY(); // was: window.scrollY
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? Math.min(1, Math.max(0, scrollTop / docHeight)) : 0;
+    const depth = progress * MAX_DEPTH;
+
+    if (numberEl) numberEl.textContent = depth.toFixed(1);
+
+    if (gaugeEl) {
+      const bgColor = getBackgroundColorAt(progress);
+      const bgLum = relativeLuminance(bgColor);
+      const inkLum = relativeLuminance(COLOR_INK);
+      const accentLum = relativeLuminance(COLOR_ACCENT);
+
+      const inkContrast = contrastRatio(bgLum, inkLum);
+      const accentContrast = contrastRatio(bgLum, accentLum);
+
+      const rawWeight = accentContrast / (accentContrast + inkContrast);
+
+      const STEEPNESS = 3;
+      const wPow = Math.pow(rawWeight, STEEPNESS);
+      const invPow = Math.pow(1 - rawWeight, STEEPNESS);
+      const weight = wPow / (wPow + invPow);
+
+      const finalColor = lerpColor(COLOR_INK, COLOR_ACCENT, weight);
+      const r = Math.round(finalColor.r);
+      const g = Math.round(finalColor.g);
+      const b = Math.round(finalColor.b);
+
+      gaugeEl.style.setProperty('--depth-color', `rgb(${r}, ${g}, ${b})`);
+    }
+
+    ticking = false;
+  }
+
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(updateDepth);
+      ticking = true;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  updateDepth();
+</script>
