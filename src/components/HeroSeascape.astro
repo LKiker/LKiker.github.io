@@ -11,15 +11,6 @@
 // and credit it again somewhere visible (footer/colophon/README) rather
 // than relying on a code comment alone to satisfy the license.
 //
-// Unlike SunRays.astro (viewport-fixed, runs the whole time the page is
-// open), this canvas is sized to the .hero container only and its rAF loop
-// is fully paused via IntersectionObserver once the hero scrolls out of
-// view — this is the raymarcher from the "too heavy" pile of demos you
-// already rejected, so it only gets to run where you can see it.
-//
-// Usage: drop <HeroSeascape /> as the first child inside your .hero div in
-// index.astro, position: absolute/inset:0 behind .hero-content (which
-// needs z-index + position:relative to sit on top of it).
 ---
 
 <canvas id="hero-seascape-canvas" class="hero-seascape-canvas" aria-hidden="true"></canvas>

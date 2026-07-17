@@ -1,0 +1,247 @@
+---
+// SandBed.astro
+// A container-scoped WebGL layer that renders a single STATIC frame of
+// procedural sand — ridged dune noise + fine speckle grain + sparse
+// mineral glints — meant to sit behind the footer, the visual "seabed"
+// at the very end of the descent.
+//
+// This is an original noise/dune technique written for this component,
+// not derived from the greenbird10 raymarched wave shader used in
+// HeroSeascape.astro — no attribution needed here.
+//
+// Unlike HeroSeascape/SunRays, there is NO requestAnimationFrame loop at
+// all: the shader draws exactly once (on load, and again on resize), then
+// sits idle. That's the whole point of "static" — zero ongoing cost, so
+// it's safe to leave running behind the footer on every page.
+//
+// Usage: drop <SandBed /> as the FIRST child inside <footer> in
+// Footer.astro (footer already has position: relative). Everything else
+// in the footer (.footer-content, .copyright) needs z-index: 1+ to sit
+// on top of it — the canvas itself defaults to z-index: 0.
+---
+
+<canvas id="sand-bed-canvas" class="sand-bed-canvas" aria-hidden="true"></canvas>
+
+<style>
+  .sand-bed-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 0;
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  const VERT_SRC = `
+    attribute vec2 aPosition;
+    void main() {
+      gl_Position = vec4(aPosition, 0.0, 1.0);
+    }
+  `;
+
+  const FRAG_SRC = `
+    precision mediump float;
+
+    uniform vec2 iResolution;
+    uniform float uSeed;
+
+    // --- generic value noise (original, not the hero wave technique) ---
+
+    float hash(vec2 p) {
+      p = fract(p * vec2(443.897, 441.423) + uSeed);
+      p += dot(p, p.yx + 19.19);
+      return fract((p.x + p.y) * p.x);
+    }
+
+    float noise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      float a = hash(i);
+      float b = hash(i + vec2(1.0, 0.0));
+      float c = hash(i + vec2(0.0, 1.0));
+      float d = hash(i + vec2(1.0, 1.0));
+      return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+
+    // Folding the noise back on itself produces thin ridge lines instead
+    // of smooth blobs — this is what reads as individual sand ripples
+    // rather than plain cloudy noise.
+    float ridged(vec2 p) {
+      float n = noise(p);
+      return 1.0 - abs(2.0 * n - 1.0);
+    }
+
+    // A few octaves of ridged noise, each stretched/rotated slightly, so
+    // the ripple bands don't look like one repeating tile.
+    float duneField(vec2 uv) {
+      float val = 0.0;
+      float amp = 0.55;
+      float freq = 1.0;
+      for (int i = 0; i < 4; i++) {
+        vec2 p = uv * freq;
+        p += vec2(p.y, -p.x) * 0.15; // slight shear per octave
+        val += ridged(p) * amp;
+        freq *= 2.05;
+        amp *= 0.5;
+      }
+      return val;
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / iResolution.y;
+
+      // Stretch ripples horizontally so dunes read as elongated ridges
+      // running across the seabed rather than isolated bumps.
+      vec2 rippleUV = vec2(uv.x * 2.2, uv.y * 6.0);
+      float dunes = duneField(rippleUV);
+
+      // Sandy olive/tan palette pulled from a real seabed reference photo
+      // (dark mossy-brown in the shadows, khaki mid-tone, pale sandy
+      // highlight) instead of the site's blue-teal water tokens — this
+      // layer reads as ground, not more water.
+        vec3 sandDark  = vec3(24.0, 31.0, 41.0) / 255.0;
+        vec3 sandMid   = vec3(46.0, 51.0, 56.0) / 255.0;
+        vec3 sandLight = vec3(71.0, 73.0, 74.0) / 255.0;
+
+      vec3 col = mix(sandDark, sandMid, dunes);
+      col = mix(col, sandLight, pow(dunes, 4.0) * 0.3);
+
+      // Fine speckle grain gives the flat dune shading actual sand
+      // texture instead of looking like a smooth gradient blob.
+      float grain = hash(gl_FragCoord.xy * 0.6);
+      col += (grain - 0.5) * 0.035;
+
+      // Sparse mineral glints — a small fraction of grains catch a paler
+      // highlight, like sand catching residual light.
+      float sparkle = step(0.9975, hash(floor(gl_FragCoord.xy * 0.5) + 100.0));
+      col = mix(col, sandLight, sparkle * 0.5);
+
+      // Fade the TOP edge of the canvas to transparent (gl_FragCoord.y
+      // near iResolution.y) so the sandbed dissolves into the .ocean
+      // gradient's abyss stop above the footer instead of showing a
+      // hard seam. Bottom of the canvas (y near 0) stays fully opaque.
+      float topFade = smoothstep(0.0, 0.25, 1.0 - uv.y);
+
+      gl_FragColor = vec4(col, topFade);
+    }
+  `;
+
+  function compileShader(gl: WebGLRenderingContext, type: number, source: string) {
+    const shader = gl.createShader(type);
+    if (!shader) return null;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      console.warn('SandBed shader compile error:', gl.getShaderInfoLog(shader));
+      gl.deleteShader(shader);
+      return null;
+    }
+    return shader;
+  }
+
+  function setup() {
+    const canvas = document.getElementById('sand-bed-canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+
+    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+    if (!gl) {
+      // No WebGL support — footer just shows the plain .ocean background.
+      canvas.style.display = 'none';
+      return;
+    }
+
+    const vertShader = compileShader(gl, gl.VERTEX_SHADER, VERT_SRC);
+    const fragShader = compileShader(gl, gl.FRAGMENT_SHADER, FRAG_SRC);
+    if (!vertShader || !fragShader) {
+      canvas.style.display = 'none';
+      return;
+    }
+
+    const program = gl.createProgram();
+    if (!program) return;
+    gl.attachShader(program, vertShader);
+    gl.attachShader(program, fragShader);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.warn('SandBed program link error:', gl.getProgramInfoLog(program));
+      canvas.style.display = 'none';
+      return;
+    }
+    gl.useProgram(program);
+
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const aPosition = gl.getAttribLocation(program, 'aPosition');
+    gl.enableVertexAttribArray(aPosition);
+    gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+    const uResolution = gl.getUniformLocation(program, 'iResolution');
+    const uSeed = gl.getUniformLocation(program, 'uSeed');
+
+    // Fixed per-load seed so the pattern doesn't reroll on every resize —
+    // it should look like one continuous seabed, not a new one each time.
+    const seed = Math.random() * 1000.0;
+
+    // No animation, so no need to spare the GPU with a tiny render scale —
+    // but the grain/sparkle detail benefits from resolution, so keep this
+    // closer to native than the animated shaders elsewhere on the site.
+    const RENDER_SCALE = 0.75;
+    const MAX_DPR = 1.5;
+
+    let width = 0;
+    let height = 0;
+
+    function draw() {
+      if (!gl) return;
+      gl.uniform2f(uResolution, width, height);
+      gl.uniform1f(uSeed, seed);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    function resize() {
+      if (!gl || !canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR) * RENDER_SCALE;
+      width = Math.max(1, Math.floor(rect.width * dpr));
+      height = Math.max(1, Math.floor(rect.height * dpr));
+      canvas.width = width;
+      canvas.height = height;
+      gl.viewport(0, 0, width, height);
+      draw();
+    }
+
+    // Render once the footer is actually visible, rather than paying the
+    // (small, one-time) cost while it's still off-screen below the fold.
+    let hasRendered = false;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasRendered) {
+          hasRendered = true;
+          resize();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0, rootMargin: '200% 0px' }
+    );
+    observer.observe(canvas);
+
+    // Re-draw on resize (debounced to one draw per animation frame) —
+    // still just a single static frame, never a running loop.
+    let resizeScheduled = false;
+    window.addEventListener('resize', () => {
+      if (!hasRendered || resizeScheduled) return;
+      resizeScheduled = true;
+      requestAnimationFrame(() => {
+        resize();
+        resizeScheduled = false;
+      });
+    });
+  }
+
+  setup();
+</script>

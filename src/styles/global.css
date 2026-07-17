@@ -38,11 +38,11 @@ a {
     /* Ocean depth palette, light to dark — matched to sampled ambient
        water color from reference photo (edges, away from the sunburst,
        which the shader renders separately) */
-    --color-surface-aqua: #175f78;
+    --color-surface-aqua: #2e8fac;
     --color-shallow: #0f516a;
     --color-mid-water: #0a3f54;
     --color-deep: #052a38;
-    --color-abyss: #02141c;
+    --color-abyss: #010a0e;
 
     /* Text + accent */
     --color-surface-text: #eaf6f6;

@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 import DepthGauge from "../components/DepthGauge.astro";
 import HeroSeascape from "../components/HeroSeascape.astro";
+import SunRays from '../components/SunRays.astro';
 import { projects } from '../data/projects';
 
 const pageTitle = "Portfolio"
@@ -11,7 +12,8 @@ const pageTitle = "Portfolio"
     <DepthGauge />
 
     <div class="hero">
-        <HeroSeascape />
+        <!-- <HeroSeascape />
+        <SunRays /> -->
         <a href="/simple/" class="simple-view-link">simple view</a>
 
         <div class="hero-content">
@@ -108,10 +110,6 @@ const pageTitle = "Portfolio"
         display: flex;
         flex-direction: column;
         gap: 2rem;
-    }
-
-    .project-card {
-        margin-bottom: 60vh; /* buffer so the previous card fully clears before the next arrives */
     }
 
     .project-card:last-child {

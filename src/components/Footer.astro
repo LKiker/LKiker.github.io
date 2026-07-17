@@ -1,8 +1,10 @@
 ---
 import Social from "./Social.astro";
+import SandBed from "./SandBed.astro";
 const currentYear = new Date().getFullYear();
 ---
 <footer>
+  <SandBed />
   <div class="footer-content">
     <p>
       <a href="#" class="back-link">
@@ -41,6 +43,7 @@ const currentYear = new Date().getFullYear();
     flex-direction: column;
     align-items: center;
     gap: 1rem;
+    z-index: 1;
   }
 
   /* Lays out the social buttons side-by-side */
