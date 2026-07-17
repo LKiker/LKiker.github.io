@@ -35,12 +35,14 @@ a {
     --font-body: 'IBM Plex Sans', sans-serif;
     --font-mono: 'IBM Plex Mono', monospace;
 
-    /* Ocean depth palette, light to dark */
-    --color-surface-aqua: #cdeef0;
-    --color-shallow: #4fa8b8;
-    --color-mid-water: #1c5c72;
-    --color-deep: #0a1f2e;
-    --color-abyss: #04101a;
+    /* Ocean depth palette, light to dark — matched to sampled ambient
+       water color from reference photo (edges, away from the sunburst,
+       which the shader renders separately) */
+    --color-surface-aqua: #175f78;
+    --color-shallow: #0f516a;
+    --color-mid-water: #0a3f54;
+    --color-deep: #052a38;
+    --color-abyss: #02141c;
 
     /* Text + accent */
     --color-surface-text: #eaf6f6;
@@ -56,6 +58,14 @@ a {
 /* ---------- Ocean background wrapper ---------- */
 .ocean {
     min-height: 100vh;
+    background: linear-gradient(
+      180deg,
+      var(--color-surface-aqua) 0%,
+      var(--color-shallow) 20%,
+      var(--color-mid-water) 45%,
+      var(--color-deep) 70%,
+      var(--color-abyss) 100%
+    );
 }
 
 /* ---------- Reduced motion ---------- */

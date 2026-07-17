@@ -60,6 +60,19 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', resizeLayer);
 
+  // scrollHeight at script-init time can be shorter than the page's final
+  // height if images, video posters, or web fonts haven't finished loading/
+  // painting yet — that would squeeze all 5 gradient stops into too little
+  // vertical space, producing a harsh, fast color shift instead of the
+  // intended slow fade. Recompute once things have actually settled.
+  window.addEventListener('load', resizeLayer);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(resizeLayer);
+  }
+  // Fallback in case something async (lazy images, etc.) still changes
+  // page height slightly after 'load'.
+  setTimeout(resizeLayer, 500);
+
   resizeLayer();
   updateBackground();
 </script>

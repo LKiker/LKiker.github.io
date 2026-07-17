@@ -1,8 +1,93 @@
 ---
 import Social from "./Social.astro";
+const currentYear = new Date().getFullYear();
 ---
-
 <footer>
-    <h2>^ Back to top</h2>
-    <Social platform="github" username="LKiker" />
+  <div class="footer-content">
+    <p>
+      <a href="#" class="back-link">
+        <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/>
+        </svg>
+        <span>back to surface</span>
+      </a>
+    </p>
+    
+    <!-- Grouped social links container -->
+    <div class="social-links-row">
+      <Social platform="github" username="LKiker" />
+      <Social platform="linkedin" username="landreykiker" />
+    </div>
+  </div>
+
+  <p class="copyright">&copy; {currentYear}</p>
 </footer>
+
+<style>
+  footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 2rem 0;
+    position: relative; 
+    min-height: 120px;
+  }
+
+  .footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* Lays out the social buttons side-by-side */
+  .social-links-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem; /* Space between the social items */
+  }
+
+  .back-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-flex; 
+    align-items: center;
+    gap: 0.35rem;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .back-link:hover {
+    transform: scale(1.08);
+  }
+
+  .arrow-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: currentColor;
+  }
+
+  .copyright {
+    position: absolute;
+    bottom: 1rem;
+    left: 2rem;
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 600px) {
+    footer {
+      position: static;
+      min-height: auto;
+    }
+    .copyright {
+      position: static;
+      margin-top: 1rem;
+    }
+  }
+</style>

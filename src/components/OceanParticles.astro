@@ -1,20 +1,22 @@
 ---
-// Ambient depth layers for the .ocean background. Each layer is tagged
-// with data-depth so a later parallax script can transform them at
-// different scroll-multipliers (e.g. translateY(scrollY * depth)).
-// Higher depth = moves more = reads as "closer" to the viewer.
+// Ambient underwater particle layer only — no background gradient,
+// assumes the page already has a background. Two particle types:
+// tiny sparkle specks (uniform distribution) and a few soft
+// out-of-focus bokeh circles (blurred, low opacity), matching
+// natural suspended-particle / plankton photography.
+// data-depth is kept for a later parallax script.
 
 interface Particle {
   cx: number;
   cy: number;
   r: number;
+  o: number;
 }
 
-function generateParticles(count: number, seed: number): Particle[] {
+function generateParticles(count: number, seed: number, minR: number, maxR: number, minO: number, maxO: number): Particle[] {
   const particles: Particle[] = [];
   let s = seed;
   const rand = () => {
-    // simple deterministic pseudo-random so SSR output is stable
     s = (s * 9301 + 49297) % 233280;
     return s / 233280;
   };
@@ -22,45 +24,51 @@ function generateParticles(count: number, seed: number): Particle[] {
     particles.push({
       cx: rand() * 100,
       cy: rand() * 100,
-      r: 0.5 + rand() * 1.5,
+      r: minR + rand() * (maxR - minR),
+      o: minO + rand() * (maxO - minO),
     });
   }
   return particles;
 }
 
-// Far layer: small, dense, low contrast — barely moves under parallax
-const farParticles = generateParticles(60, 17);
-// Mid layer: medium size/density
-const midParticles = generateParticles(30, 42);
-// Near layer: fewer, larger, more visible — moves the most under parallax
-const nearParticles = generateParticles(14, 99);
+// Sparkle specks: tiny, uniform spread, three depth layers for parallax
+const farSpecks = generateParticles(70, 17, 0.15, 0.35, 0.3, 0.55);
+const midSpecks = generateParticles(45, 42, 0.2, 0.45, 0.4, 0.65);
+const nearSpecks = generateParticles(25, 99, 0.25, 0.55, 0.5, 0.8);
+
+// Bokeh circles: few, large, soft, low opacity
+const bokeh = generateParticles(6, 71, 3, 8, 0.12, 0.28);
 ---
 
 <div class="ocean-particles" aria-hidden="true">
   <svg class="particle-layer" data-depth="0.1" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-    {farParticles.map((p) => (
-      <circle cx={p.cx} cy={p.cy} r={p.r * 0.4} class="particle particle--far" />
+    {farSpecks.map((p) => (
+      <circle cx={p.cx} cy={p.cy} r={p.r} fill="#eafcff" opacity={p.o} />
     ))}
   </svg>
 
   <svg class="particle-layer" data-depth="0.3" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-    {midParticles.map((p) => (
-      <circle cx={p.cx} cy={p.cy} r={p.r * 0.6} class="particle particle--mid" />
+    {midSpecks.map((p) => (
+      <circle cx={p.cx} cy={p.cy} r={p.r} fill="#eafcff" opacity={p.o} />
+    ))}
+    <defs>
+      <filter id="bokeh-blur" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="1.2" />
+      </filter>
+      <radialGradient id="bokeh-fill" cx="40%" cy="35%" r="65%">
+        <stop offset="0%" stop-color="#eafcff" stop-opacity="0.6" />
+        <stop offset="100%" stop-color="#eafcff" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+    {bokeh.map((p) => (
+      <circle cx={p.cx} cy={p.cy} r={p.r} fill="url(#bokeh-fill)" opacity={p.o} filter="url(#bokeh-blur)" />
     ))}
   </svg>
 
   <svg class="particle-layer" data-depth="0.6" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-    {nearParticles.map((p) => (
-      <circle cx={p.cx} cy={p.cy} r={p.r} class="particle particle--near" />
+    {nearSpecks.map((p) => (
+      <circle cx={p.cx} cy={p.cy} r={p.r} fill="#ffffff" opacity={p.o} />
     ))}
-  </svg>
-
-  <svg class="grain-overlay" aria-hidden="true">
-    <filter id="grain">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
-      <feColorMatrix type="saturate" values="0" />
-    </filter>
-    <rect width="100%" height="100%" filter="url(#grain)" />
   </svg>
 </div>
 
@@ -79,61 +87,4 @@ const nearParticles = generateParticles(14, 99);
     width: 100%;
     height: 100%;
   }
-
-  .particle {
-    fill: var(--color-surface-text);
-  }
-
-  .particle--far {
-    opacity: 0.15;
-  }
-
-  .particle--mid {
-    opacity: 0.25;
-  }
-
-  .particle--near {
-    opacity: 0.35;
-  }
-
-  .grain-overlay {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0.04;
-    mix-blend-mode: overlay;
-  }
 </style>
-
-<script>
-  import { getVirtualScrollY } from '../scripts/scrollState';
-
-  const layers = document.querySelectorAll<HTMLElement>('.particle-layer');
-  let ticking = false;
-
-  function updateParticles() {
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = docHeight > 0 ? getVirtualScrollY() / docHeight : 0;
-
-    layers.forEach((layer) => {
-      const depth = parseFloat(layer.dataset.depth || '0.3');
-      const maxShiftPercent = 40 * depth;
-      // progress goes 0 -> 1 down the page; map that to -max -> +max
-      const shift = (1 - progress * 2) * maxShiftPercent;
-      layer.style.transform = `translateY(${shift}%)`;
-    });
-
-    ticking = false;
-  }
-
-  function onScroll() {
-    if (!ticking) {
-      requestAnimationFrame(updateParticles);
-      ticking = true;
-    }
-  }
-
-  window.addEventListener('scroll', onScroll, { passive: true });
-  updateParticles();
-</script>

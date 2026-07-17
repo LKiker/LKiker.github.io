@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 import DepthGauge from "../components/DepthGauge.astro";
+import HeroSeascape from "../components/HeroSeascape.astro";
 import { projects } from '../data/projects';
 
 const pageTitle = "Portfolio"
@@ -10,6 +11,7 @@ const pageTitle = "Portfolio"
     <DepthGauge />
 
     <div class="hero">
+        <HeroSeascape />
         <a href="/simple/" class="simple-view-link">simple view</a>
 
         <div class="hero-content">
@@ -34,7 +36,7 @@ const pageTitle = "Portfolio"
 
 <style>
     .hero {
-        position: relative;
+        position: relative; /* HeroSeascape's canvas anchors to this */
         height: 100vh;
         display: flex;
         flex-direction: column;
@@ -49,6 +51,7 @@ const pageTitle = "Portfolio"
         position: absolute;
         top: 1.5rem;
         left: 1.5rem;
+        z-index: 1; /* above the canvas */
         font-family: var(--font-mono);
         font-size: 0.7rem;
         letter-spacing: 0.06em;
@@ -64,6 +67,8 @@ const pageTitle = "Portfolio"
     }
 
     .hero-content {
+        position: relative;
+        z-index: 2; /* above the canvas */
         max-width: 40ch;
     }
 
@@ -89,7 +94,7 @@ const pageTitle = "Portfolio"
         font-family: var(--font-body);
         font-size: 0.9rem;
         line-height: 1.7;
-        color: var(--color-ink-muted);
+        color: var(--color-surface-text);
         margin: 0;
     }
 

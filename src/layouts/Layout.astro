@@ -3,6 +3,8 @@ import Footer from '../components/Footer.astro';
 import OceanBackground from '../components/OceanBackground.astro';
 import OceanParticles from '../components/OceanParticles.astro';
 import ParallaxController from '../components/ParallaxController.astro';
+import SunRays from '../components/SunRays.astro';
+import HeroSeascape from '../components/HeroSeascape.astro';
 import '../styles/global.css';
 const { pageTitle } = Astro.props;
 ---
@@ -10,7 +12,7 @@ const { pageTitle } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-sacle=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,12 +20,13 @@ const { pageTitle } = Astro.props;
     <title>{pageTitle}</title>
   </head>
   <body>
-    <OceanBackground />
+    <!--  <OceanBackground /> -->
     <div class="ocean">
-      <OceanParticles />
+      <!-- <OceanParticles /> -->
+      <SunRays />
       <slot />
       <Footer />
     </div>
-    <ParallaxController />
+    <!-- <ParallaxController /> -->
   </body>
 </html>
