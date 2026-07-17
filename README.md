@@ -2,6 +2,6 @@
 
 Personal Portfolio site in progress
 
-**Stack:** Astro
+**Stack:** Astro, GSAP
 
 **Status:** Building underwater descent concept.
