@@ -9,53 +9,52 @@ const { project } = Astro.props;
 const { title, description, tags, links, media } = project;
 ---
 
-
 <article class="project-card" data-project-id={project.id} data-category={project.category}>
-    <div class="media-frame" data-parallax-depth="0.15">
-      <div class="media-visual">
-        {media.video ? (
-          <video
-            class="project-video"
-            poster={media.poster}
-            muted
-            loop
-            playsinline
-            preload="none"
-          >
-            <source src={media.video} type="video/mp4" />
-            </video>
-            ) : media.poster ? (
-              <img class="project-poster" src={media.poster} alt={`${title} preview`} />
-            ) : (
-              <div class="media-placeholder" aria-hidden="true"></div>
-            )}
-        <div class="card-veil"></div>
-      </div>
-
-    <div class="card-content">
-      <h3 class="title">{title}</h3>
-      <p class="description">{description}</p>
-
-      {tags.length > 0 && (
-        <ul class="tags">
-          {tags.map((tag) => (
-            <li class="tag">{tag}</li>
-          ))}
-        </ul>
+  <div class="media-frame" data-parallax-depth="0.15">
+    <div class="media-visual">
+      {media.video ? (
+        <video
+          class="project-video"
+          poster={media.poster}
+          muted
+          loop
+          playsinline
+          preload="none"
+        >
+          <source src={media.video} type="video/mp4" />
+        </video>
+      ) : media.poster ? (
+        <img class="project-poster" src={media.poster} alt={`${title} preview`} />
+      ) : (
+        <div class="media-placeholder" aria-hidden="true"></div>
       )}
+      <div class="card-veil"></div>
+    </div>
+  </div>
 
-      <div class="links">
-        {links.github && (
-          <a class="link" href={links.github} target="_blank" rel="noopener noreferrer">
-            View on GitHub →
-          </a>
-        )}
-        {links.live && (
-          <a class="link" href={links.live} target="_blank" rel="noopener noreferrer">
-            View live →
-          </a>
-        )}
-      </div>
+  <div class="card-content">
+    <h3 class="title">{title}</h3>
+    <p class="description">{description}</p>
+
+    {tags.length > 0 && (
+      <ul class="tags">
+        {tags.map((tag) => (
+          <li class="tag">{tag}</li>
+        ))}
+      </ul>
+    )}
+
+    <div class="links">
+      {links.github && (
+        <a class="link" href={links.github} target="_blank" rel="noopener noreferrer">
+          View on GitHub →
+        </a>
+      )}
+      {links.live && (
+        <a class="link" href={links.live} target="_blank" rel="noopener noreferrer">
+          View live →
+        </a>
+      )}
     </div>
   </div>
 </article>
@@ -67,10 +66,22 @@ const { title, description, tags, links, media } = project;
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 2.5rem;
         padding: 3rem 2rem;
         box-sizing: border-box;
-        margin-bottom: 70vh;
+        margin-bottom: 20vh;
         margin-top: 20vh;
+    }
+
+    /* Odd cards: media on the left, caption fills the space to the right.
+       Even cards: mirrored. Real flex layout, not a visual illusion, so
+       card-content genuinely occupies the room media-frame leaves open. */
+    .project-card:nth-of-type(odd) {
+        flex-direction: row;
+    }
+
+    .project-card:nth-of-type(even) {
+        flex-direction: row-reverse;
     }
 
     .project-video,
@@ -82,12 +93,28 @@ const { title, description, tags, links, media } = project;
 
     .media-frame {
         position: relative;
-        width: 100%;
-        height: 100%;
+        flex: 0 1 60%;
+        height: 80%;
         max-height: 80vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        transform: scale(0.94);
+        transition: transform 0.4s ease;
+    }
+
+    /* Pure CSS hover — deliberately not GSAP. Nothing else ever writes to
+       .media-frame's transform (GSAP only touches .media-visual's), so
+       this has zero competition and no merge-order dependency. Gated the
+       same way the JS tilt effect is, so touch/no-hover devices simply
+       keep the resting scale with no dead hover state to trip over. */
+    @media (hover: hover) and (pointer: fine) {
+        .media-frame:hover {
+            transform: scale(1);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .media-frame {
+            transition: none;
+        }
     }
 
     .media-visual {
@@ -114,10 +141,10 @@ const { title, description, tags, links, media } = project;
         background: #f0f0f0;
     }
 
+    /* Sibling of media-frame, not overlaid on top of it — sits in the
+       flex space media-frame leaves open beside it. */
     .card-content {
-        position: absolute;
-        bottom: 1.5rem;
-        right: 1.5rem;
+        flex: 1 1 260px;
         max-width: 380px;
         display: flex;
         flex-direction: column;
@@ -127,7 +154,6 @@ const { title, description, tags, links, media } = project;
         backdrop-filter: blur(6px);
         color: #fff;
         border-radius: 8px;
-        z-index: 2;
     }
 
     .tags {
@@ -154,18 +180,35 @@ const { title, description, tags, links, media } = project;
     .link {
         color: #fff;
     }
+
+    @media (max-width: 800px) {
+        .project-card,
+        .project-card:nth-of-type(even) {
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .media-frame {
+            flex: 0 1 auto;
+            width: 100%;
+        }
+
+        .card-content {
+            max-width: none;
+            width: 100%;
+        }
+    }
 </style>
 
 <script>
   import gsap from 'gsap';
   import { ScrollTrigger } from 'gsap/ScrollTrigger';
-  
+
   gsap.registerPlugin(ScrollTrigger);
 
-  // scroll trigger for each card
   gsap.utils.toArray<HTMLElement>('.media-visual').forEach((visual) => {
-    const x = gsap.utils.random(-10, 10);
-    const y = gsap.utils.random(-10, 10);
+    const x = gsap.utils.random(-50, 50);
+    const y = gsap.utils.random(-20, 20);
     const veil = visual.querySelector<HTMLElement>('.card-veil');
 
     // suspended/floating in water effect
@@ -194,11 +237,11 @@ const { title, description, tags, links, media } = project;
       { filter: 'blur(6px) saturate(0.5) brightness(0.8)' },
       {
         filter: 'blur(0px) saturate(1) brightness(1)',
-        ease: "none",
+        ease: 'none',
         scrollTrigger: {
           trigger: visual,
           start: 'top bottom',
-          end: 'bottom bottom',
+          end: '80% bottom',
           scrub: true,
         },
       }
@@ -210,10 +253,10 @@ const { title, description, tags, links, media } = project;
       { filter: 'blur(0px) saturate(1) brightness(1)' },
       {
         filter: 'blur(6px) saturate(0.5) brightness(0.8)',
-        ease: "none",
+        ease: 'none',
         scrollTrigger: {
           trigger: visual,
-          start: 'top top',
+          start: '20% top',
           end: 'bottom top',
           scrub: true,
         },
@@ -231,7 +274,7 @@ const { title, description, tags, links, media } = project;
           scrollTrigger: {
             trigger: visual,
             start: 'top bottom',
-            end: 'bottom bottom',
+            end: '80% bottom',
             scrub: true,
           },
         }
@@ -245,7 +288,7 @@ const { title, description, tags, links, media } = project;
           ease: 'none',
           scrollTrigger: {
             trigger: visual,
-            start: 'top top',
+            start: '20% top',
             end: 'bottom top',
             scrub: true,
           },
@@ -253,4 +296,41 @@ const { title, description, tags, links, media } = project;
       );
     }
   });
+
+  // Pointer tilt
+  const supportsHoverTilt = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const tiltReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (supportsHoverTilt && !tiltReducedMotion) {
+    gsap.utils.toArray<HTMLElement>('.media-frame').forEach((frame) => {
+      gsap.set(frame, { perspective: 650 });
+
+      const visual = frame.querySelector<HTMLElement>('.media-visual');
+      const content = frame.parentElement?.querySelector<HTMLElement>('.card-content') ?? null;
+      if (!visual) return;
+
+      const tiltX = gsap.quickTo(visual, 'rotationX', { duration: 0.5, ease: 'power3' });
+      const tiltY = gsap.quickTo(visual, 'rotationY', { duration: 0.5, ease: 'power3' });
+      const contentX = content ? gsap.quickTo(content, 'x', { duration: 0.5, ease: 'power3' }) : null;
+      const contentY = content ? gsap.quickTo(content, 'y', { duration: 0.5, ease: 'power3' }) : null;
+
+      frame.addEventListener('pointermove', (e: PointerEvent) => {
+        const rect = frame.getBoundingClientRect();
+        const px = (e.clientX - rect.left) / rect.width;
+        const py = (e.clientY - rect.top) / rect.height;
+
+        tiltX(gsap.utils.interpolate(4, -4, py));
+        tiltY(gsap.utils.interpolate(-4, 4, px));
+        contentX?.(gsap.utils.interpolate(-6, 6, px));
+        contentY?.(gsap.utils.interpolate(-6, 6, py));
+      });
+
+      frame.addEventListener('pointerleave', () => {
+        tiltX(0);
+        tiltY(0);
+        contentX?.(0);
+        contentY?.(0);
+      });
+    });
+  }
 </script>
