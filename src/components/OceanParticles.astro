@@ -1,0 +1,228 @@
+---
+// OceanParticles.astro
+// Static, layered bokeh-style particle field — three depth layers stacked
+// in one absolutely-positioned wrapper, each its own canvas. Particles are
+// soft-edged radial-gradient orbs (not hard-filled circles) to match a
+// bokeh/marine-snow look rather than flat dots.
+//
+// Each particle's opacity is additionally scaled by a vertical falloff:
+// top third fades in, middle third is full strength, bottom third fades
+// out. This is computed relative to the container's visible bounds, not
+// the canvas's own (taller, overscanned) drawn area — so particles
+// sitting in the overscan buffer used for data-lag naturally end up
+// near-invisible already, which conveniently reinforces the fade rather
+// than fighting it.
+//
+// Parallax lag lives directly on each canvas via data-lag (ScrollSmoother's
+// effects: true writes a transform there every frame). A gentle idle
+// drift is layered on top via GSAP — but NOT on the canvas itself, since
+// two things writing `transform` on the same element every frame silently
+// fails to merge. Instead each canvas sits inside its own
+// .ocean-particles-layer wrapper, and the drift tween targets the
+// wrapper instead. The wrapper is given explicit inset: 0 sizing so it
+// doesn't collapse to 0×0 (its only child is absolutely positioned and
+// contributes nothing to its size otherwise) — that's what broke this
+// last time.
+//
+// The viewport wrapper uses a "full-bleed" trick to span the full
+// browser width even though its container (.projects-page) is a
+// narrower centered column — vertical span still follows the container.
+---
+
+<div class="ocean-particles-viewport" aria-hidden="true">
+  <div class="ocean-particles-layer" data-layer="far">
+    <canvas class="ocean-particles-canvas" data-lag="0.1"></canvas>
+  </div>
+  <div class="ocean-particles-layer" data-layer="mid">
+    <canvas class="ocean-particles-canvas" data-lag="0.3"></canvas>
+  </div>
+  <div class="ocean-particles-layer" data-layer="near">
+    <canvas class="ocean-particles-canvas" data-lag="0.5"></canvas>
+  </div>
+</div>
+
+<style>
+  .ocean-particles-viewport {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
+    margin-left: -50vw;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .ocean-particles-layer {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+  }
+
+  .ocean-particles-canvas {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    display: block;
+  }
+</style>
+
+<script>
+  import gsap from 'gsap';
+
+  interface LayerConfig {
+    densityDivisor: number;  // lower = denser
+    minCount: number;
+    maxCount: number;
+    radiusMin: number;
+    radiusRange: number;
+    opacityMin: number;
+    opacityRange: number;
+    travelFraction: number;  // overscan buffer size, as a fraction of container height
+    driftAmount: number;     // px of idle drift on the layer wrapper — smaller particles drift less
+  }
+
+  // travelFraction just needs to be generous enough that data-lag's shift
+  // never exposes an undrawn edge — it doesn't need to match the lag
+  // value precisely, just be a comfortable upper bound on how far
+  // ScrollSmoother might visually offset the layer.
+  const LAYER_CONFIGS: Record<string, LayerConfig> = {
+    far:  { densityDivisor: 4000,  minCount: 80, maxCount: 250, radiusMin: 4,  radiusRange: 7,  opacityMin: 0.03, opacityRange: 0.05, travelFraction: 0.10, driftAmount: 3 },
+    mid:  { densityDivisor: 6000,  minCount: 50, maxCount: 150, radiusMin: 8,  radiusRange: 11, opacityMin: 0.04, opacityRange: 0.07, travelFraction: 0.20, driftAmount: 6 },
+    near: { densityDivisor: 10000, minCount: 20, maxCount: 70,  radiusMin: 14, radiusRange: 17, opacityMin: 0.06, opacityRange: 0.10, travelFraction: 0.35, driftAmount: 10 },
+  };
+
+  const RENDER_SCALE = 0.75;
+  const MAX_DPR = 1.5;
+
+  // Two colors to pick from per-particle for a bit of variation, rather
+  // than every orb being identically tinted.
+  const PARTICLE_COLORS = [
+    '234, 246, 246', // --color-surface-text
+    '94, 234, 212',  // --color-accent
+  ];
+
+  function smoothstep(edge0: number, edge1: number, x: number) {
+    const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
+    return t * t * (3 - 2 * t);
+  }
+
+  // Returns 0..1 — 0 at the very top/bottom, 1 across the middle third,
+  // smoothly ramped in the top and bottom thirds. y and height are both
+  // in container-relative coordinates (0 = container top).
+  function verticalFade(y: number, height: number) {
+    if (y < height / 4) {
+      return smoothstep(0, height / 4, y);
+    }
+    if (y > height - height / 1.5) {
+      return 1 - smoothstep(height - height / 1.5, height, y);
+    }
+    return 1;
+  }
+
+  function drawLayer(canvas: HTMLCanvasElement, containerWidth: number, containerHeight: number, config: LayerConfig) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const travelPx = config.travelFraction * containerHeight;
+    const drawnHeight = containerHeight + travelPx;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR) * RENDER_SCALE;
+
+    canvas.style.width = `${containerWidth}px`;
+    canvas.style.height = `${drawnHeight}px`;
+    canvas.style.top = `${-travelPx / 2}px`;
+
+    canvas.width = Math.max(1, Math.floor(containerWidth * dpr));
+    canvas.height = Math.max(1, Math.floor(drawnHeight * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, containerWidth, drawnHeight);
+
+    const count = Math.min(
+      config.maxCount,
+      Math.max(config.minCount, Math.round((containerWidth * drawnHeight) / config.densityDivisor))
+    );
+
+    for (let i = 0; i < count; i++) {
+      const x = Math.random() * containerWidth;
+      const y = Math.random() * drawnHeight;
+
+      // Canvas top sits at -travelPx/2 relative to the container, so
+      // shift canvas-local y back into container-relative coordinates
+      // before applying the fade.
+      const containerY = y - travelPx / 2;
+      const fade = verticalFade(containerY, containerHeight);
+      if (fade <= 0.01) continue; // skip drawing effectively-invisible particles
+
+      const r = Math.random() * config.radiusRange + config.radiusMin;
+
+      // Bias toward dim, with occasional brighter standouts — most real
+      // bokeh fields have a handful of orbs catching more light than the
+      // rest, not a flat even distribution.
+      const opacityBias = Math.pow(Math.random(), 2.5);
+      const opacity = (opacityBias * config.opacityRange + config.opacityMin) * fade;
+
+      const color = PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)];
+
+      // Soft radial falloff instead of a flat-filled circle — this is
+      // what gives the glow rather than a hard-edged dot.
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
+      gradient.addColorStop(0, `rgba(${color}, ${opacity})`);
+      gradient.addColorStop(1, `rgba(${color}, 0)`);
+
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+  }
+
+  function setupDrift() {
+    gsap.utils.toArray<HTMLElement>('.ocean-particles-layer').forEach((layer) => {
+      const config = LAYER_CONFIGS[layer.dataset.layer ?? ''];
+      const amount = config?.driftAmount ?? 5;
+
+      gsap.fromTo(
+        layer,
+        { x: -amount, y: -amount * 0.6 },
+        {
+          x: amount,
+          y: amount * 0.6,
+          duration: 6,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+        }
+      );
+    });
+  }
+
+  function setup() {
+    const container = document.querySelector('.ocean-particles-viewport') as HTMLElement | null;
+    if (!container) return;
+
+    const canvases = Array.from(
+      container.querySelectorAll<HTMLCanvasElement>('.ocean-particles-canvas')
+    );
+
+    function redrawAll() {
+      const rect = container!.getBoundingClientRect();
+      for (const canvas of canvases) {
+        const layerName = canvas.dataset.layer ?? canvas.closest<HTMLElement>('.ocean-particles-layer')?.dataset.layer;
+        const config = layerName ? LAYER_CONFIGS[layerName] : undefined;
+        if (config) drawLayer(canvas, rect.width, rect.height, config);
+      }
+    }
+
+    // Static art — only needs to redraw when the container's size
+    // actually changes, not on any interval or scroll.
+    const observer = new ResizeObserver(() => redrawAll());
+    observer.observe(container);
+
+    redrawAll();
+    setupDrift();
+  }
+
+  setup();
+</script>

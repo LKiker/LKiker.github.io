@@ -2,36 +2,73 @@
 ---
 <div class="depth-gauge">
   <span class="depth-label">depth</span>
-  <span class="depth-value"><span id="depth-number">0.0</span><span class="depth-unit">m</span></span>
+  <div class="depth-track">
+    <div class="depth-fill" id="depth-fill"></div>
+    <div class="depth-marker" id="depth-marker">
+      <span class="depth-value"><span id="depth-number">0.0</span><span class="depth-unit">m</span></span>
+    </div>
+  </div>
 </div>
 
 <style>
   .depth-gauge {
     position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
+    top: 2rem;
+    bottom: 2rem;
+    left: 1.5rem;
     z-index: 50;
     font-family: var(--font-mono);
-    color: var(--depth-color, var(--color-ink));
+    color: var(--color-accent);
     letter-spacing: 0.06em;
-    text-align: right;
     pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
   }
 
   .depth-label {
-    display: block;
     font-size: 0.6rem;
     opacity: 0.6;
     text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .depth-track {
+    position: relative;
+    flex: 1;
+    width: 3px;
+    border-radius: 2px;
+    background: rgba(94, 234, 212, 0.15);
+  }
+
+  .depth-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: var(--color-accent);
+    border-radius: 2px;
+    will-change: height;
+  }
+
+  .depth-marker {
+    position: absolute;
+    left: 1.1rem;
+    top: 0;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    will-change: top;
   }
 
   .depth-value {
-    font-size: 1.1rem;
+    font-size: 0.75rem;
     font-weight: 500;
   }
 
   .depth-unit {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
   }
 </style>
 
@@ -40,63 +77,10 @@
 
   const MAX_DEPTH = 3682; // aesthetic scale mapped across full page scroll
 
-  // Mirrors .ocean gradient stops in global.css.
-  const BG_STOPS: { stop: number; color: { r: number; g: number; b: number } }[] = [
-    { stop: 0.00, color: { r: 0xcd, g: 0xee, b: 0xf0 } }, // --color-surface-aqua
-    { stop: 0.20, color: { r: 0x4f, g: 0xa8, b: 0xb8 } }, // --color-shallow
-    { stop: 0.45, color: { r: 0x1c, g: 0x5c, b: 0x72 } }, // --color-mid-water
-    { stop: 0.70, color: { r: 0x0a, g: 0x1f, b: 0x2e } }, // --color-deep
-    { stop: 1.00, color: { r: 0x04, g: 0x10, b: 0x1a } }, // --color-abyss
-  ];
-
-  const COLOR_INK    = { r: 0x0a, g: 0x2e, b: 0x33 }; // --color-ink
-  const COLOR_ACCENT = { r: 0x5e, g: 0xea, b: 0xd4 }; // --color-accent
-
   const numberEl = document.getElementById('depth-number');
-  const gaugeEl = document.querySelector('.depth-gauge') as HTMLElement | null;
+  const fillEl = document.getElementById('depth-fill');
+  const markerEl = document.getElementById('depth-marker');
   let ticking = false;
-
-  function lerp(a: number, b: number, t: number) {
-    return a + (b - a) * t;
-  }
-
-  function lerpColor(
-    c1: { r: number; g: number; b: number },
-    c2: { r: number; g: number; b: number },
-    t: number
-  ) {
-    return {
-      r: lerp(c1.r, c2.r, t),
-      g: lerp(c1.g, c2.g, t),
-      b: lerp(c1.b, c2.b, t),
-    };
-  }
-
-  function getBackgroundColorAt(progress: number) {
-    for (let i = 0; i < BG_STOPS.length - 1; i++) {
-      const a = BG_STOPS[i];
-      const b = BG_STOPS[i + 1];
-      if (progress >= a.stop && progress <= b.stop) {
-        const localT = (progress - a.stop) / (b.stop - a.stop || 1);
-        return lerpColor(a.color, b.color, localT);
-      }
-    }
-    return BG_STOPS[BG_STOPS.length - 1].color;
-  }
-
-  function relativeLuminance({ r, g, b }: { r: number; g: number; b: number }) {
-    const [rs, gs, bs] = [r, g, b].map((c) => {
-      const cNorm = c / 255;
-      return cNorm <= 0.03928 ? cNorm / 12.92 : Math.pow((cNorm + 0.055) / 1.055, 2.4);
-    });
-    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-  }
-
-  function contrastRatio(l1: number, l2: number) {
-    const lighter = Math.max(l1, l2);
-    const darker = Math.min(l1, l2);
-    return (lighter + 0.05) / (darker + 0.05);
-  }
 
   function updateDepth() {
     const scrollTop = getVirtualScrollY(); // was: window.scrollY
@@ -105,30 +89,8 @@
     const depth = progress * MAX_DEPTH;
 
     if (numberEl) numberEl.textContent = depth.toFixed(1);
-
-    if (gaugeEl) {
-      const bgColor = getBackgroundColorAt(progress);
-      const bgLum = relativeLuminance(bgColor);
-      const inkLum = relativeLuminance(COLOR_INK);
-      const accentLum = relativeLuminance(COLOR_ACCENT);
-
-      const inkContrast = contrastRatio(bgLum, inkLum);
-      const accentContrast = contrastRatio(bgLum, accentLum);
-
-      const rawWeight = accentContrast / (accentContrast + inkContrast);
-
-      const STEEPNESS = 3;
-      const wPow = Math.pow(rawWeight, STEEPNESS);
-      const invPow = Math.pow(1 - rawWeight, STEEPNESS);
-      const weight = wPow / (wPow + invPow);
-
-      const finalColor = lerpColor(COLOR_INK, COLOR_ACCENT, weight);
-      const r = Math.round(finalColor.r);
-      const g = Math.round(finalColor.g);
-      const b = Math.round(finalColor.b);
-
-      gaugeEl.style.setProperty('--depth-color', `rgb(${r}, ${g}, ${b})`);
-    }
+    if (fillEl) fillEl.style.height = `${progress * 100}%`;
+    if (markerEl) markerEl.style.top = `${progress * 100}%`;
 
     ticking = false;
   }

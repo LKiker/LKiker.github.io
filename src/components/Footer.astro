@@ -1,48 +1,64 @@
 ---
 import Social from "./Social.astro";
 import SandBed from "./SandBed.astro";
+
+interface Props {
+  simpleViewHref?: string;
+  simpleViewLabel?: string;
+}
+
+const {
+  simpleViewHref = "/simple/",
+  simpleViewLabel = "simple view",
+} = Astro.props;
+
 const currentYear = new Date().getFullYear();
 ---
 <footer>
   <SandBed />
-  <div class="footer-content">
-    <p>
+
+  <div class="footer-row">
+    <p class="copyright">Landrey Kiker &copy; {currentYear}</p>
+
+    <div class="nav-links-row">
       <a href="#" class="back-link">
         <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/>
         </svg>
         <span>back to surface</span>
       </a>
-    </p>
-    
-    <!-- Grouped social links container -->
+      <a href={simpleViewHref} class="simple-view-link">
+        <svg class="arrow-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+        </svg>
+        <span>{simpleViewLabel}</span>
+      </a>
+    </div>
+
     <div class="social-links-row">
       <Social platform="github" username="LKiker" />
       <Social platform="linkedin" username="landreykiker" />
     </div>
   </div>
-
-  <p class="copyright">&copy; {currentYear}</p>
 </footer>
 
 <style>
   footer {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    gap: 1rem;
-    padding: 2rem 0;
-    position: relative; 
+    padding: 2rem;
+    position: relative;
     min-height: 120px;
   }
 
-  .footer-content {
+  .footer-row {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 90%;
+    margin-top: 2.5rem;
     z-index: 1;
   }
 
@@ -50,22 +66,10 @@ const currentYear = new Date().getFullYear();
   .social-links-row {
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: flex-end;
+    font-size: 0.85rem; 
     align-items: center;
     gap: 1.5rem; /* Space between the social items */
-  }
-
-  .back-link {
-    text-decoration: none;
-    color: inherit;
-    display: inline-flex; 
-    align-items: center;
-    gap: 0.35rem;
-    transition: transform 0.2s ease-in-out;
-  }
-
-  .back-link:hover {
-    transform: scale(1.08);
   }
 
   .arrow-icon {
@@ -75,22 +79,72 @@ const currentYear = new Date().getFullYear();
   }
 
   .copyright {
-    position: absolute;
-    bottom: 1rem;
-    left: 2rem;
     margin: 0;
     font-size: 0.85rem;
     opacity: 0.7;
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    text-align: left;
+    white-space: nowrap;
   }
 
-  @media (max-width: 600px) {
+  .nav-links-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.25rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+
+  .back-link {
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .back-link:hover {
+    transform: scale(1.08);
+  }
+
+  .simple-view-link {
+    margin-left: 1rem;
+    text-decoration: none;
+    font-size: 0.85rem;
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .simple-view-link .arrow-icon {
+    margin-right: 0.35rem;
+  }
+
+  .simple-view-link:hover {
+    transform: scale(1.08);
+  }
+
+  @media (max-width: 800px) {
     footer {
       position: static;
       min-height: auto;
     }
+    .footer-row {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
     .copyright {
-      position: static;
-      margin-top: 1rem;
+      white-space: normal;
+    }
+    .social-links-row {
+      justify-content: center;
     }
   }
 </style>

@@ -1,41 +1,36 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import ProjectCard from "../components/ProjectCard.astro";
-import DepthGauge from "../components/DepthGauge.astro";
 import HeroSeascape from "../components/HeroSeascape.astro";
-import SunRays from '../components/SunRays.astro';
+import OceanParticles from "../components/OceanParticles.astro";
+import ProjectCard from "../components/ProjectCard.astro";
 import { projects } from '../data/projects';
 
 const pageTitle = "Portfolio"
 ---
 <Layout pageTitle={pageTitle}>
-    <div id="smooth-wrapper">
-        <div id="smooth-content">
-            <DepthGauge />
-            <div class="hero">
-                <!--  <HeroSeascape />
-                <SunRays /> -->
-                <a href="/simple/" class="simple-view-link">simple view</a>
+    <div class="hero">
+        <!--  <HeroSeascape /> -->
+        <a href="/simple/" class="simple-view-link">SIMPLE VIEW</a>
 
-                <div class="hero-content">
-                    <h1>Landrey Kiker</h1>
-                    <h2>Web Developer</h2>
-                    <p>
-                        I build for the web, in VR, and soon in
-                        the physical world, chasing the same curiosity that
-                        keeps me staring into aquariums.
-                    </p>
-                </div>
-            </div>
-
-            <div class="projects-page">
-                <div class="projects-list" data-lag="0.3">
-                    {projects.map((project) => (
-                        <ProjectCard project={project} />
-                    ))}
-                </div>
-            </div>
+        <div class="hero-content">
+            <h1>Landrey Kiker</h1>
+            <h2>Web Developer</h2>
+            <p>
+                I build for the web, in VR, and soon in
+                the physical world, chasing the same curiosity that
+                keeps me staring into aquariums.
+            </p>
         </div>
+    </div>
+
+    <div class="projects-page">
+        <OceanParticles />
+        <div class="projects-list">
+            {projects.map((project) => (
+                <ProjectCard project={project} />
+            ))}
+        </div>
+        
     </div>
 </Layout>
 
@@ -60,7 +55,7 @@ const pageTitle = "Portfolio"
         font-family: var(--font-mono);
         font-size: 0.7rem;
         letter-spacing: 0.06em;
-        color: var(--color-ink-muted);
+        color: var(--color-accent);
         opacity: 0.75;
         text-decoration: none;
         transition: opacity 0.2s ease, color 0.2s ease;
@@ -104,6 +99,7 @@ const pageTitle = "Portfolio"
     }
 
     .projects-page {
+        position: relative; /* anchors OceanParticles' inset: 0 */
         max-width: 80%;
         margin: 0 auto;
         padding: 4rem 1.5rem;
@@ -113,6 +109,7 @@ const pageTitle = "Portfolio"
         display: flex;
         flex-direction: column;
         gap: 2rem;
+        z-index: 3;
     }
 
     .project-card:last-child {
@@ -120,17 +117,3 @@ const pageTitle = "Portfolio"
     }
 </style>
 
-<script>
-    import gsap from 'gsap';
-    import { ScrollTrigger, ScrollSmoother } from 'gsap/all';
-
-    gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
-
-    let smoother = ScrollSmoother.create({
-        wrapper: 'smooth-wrapper',
-        content: 'smooth-content',
-        smooth: 1.5,
-        speed: .9,
-        effects: true,
-    })
-</script>

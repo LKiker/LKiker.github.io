@@ -9,26 +9,28 @@ const { project } = Astro.props;
 const { title, description, tags, links, media } = project;
 ---
 
-<article class="project-card" data-project-id={project.id} data-category={project.category}>
+<article class="project-card" data-project-id={project.id} data-category={project.category} data-lag="0.5">
   <div class="media-frame" data-parallax-depth="0.15">
-    <div class="media-visual">
-      {media.video ? (
-        <video
-          class="project-video"
-          poster={media.poster}
-          muted
-          loop
-          playsinline
-          preload="none"
-        >
-          <source src={media.video} type="video/mp4" />
-        </video>
-      ) : media.poster ? (
-        <img class="project-poster" src={media.poster} alt={`${title} preview`} />
-      ) : (
-        <div class="media-placeholder" aria-hidden="true"></div>
-      )}
-      <div class="card-veil"></div>
+    <div class="push-anchor">
+      <div class="media-visual">
+        {media.video ? (
+          <video
+            class="project-video"
+            poster={media.poster}
+            muted
+            loop
+            playsinline
+            preload="none"
+          >
+            <source src={media.video} type="video/mp4" />
+          </video>
+        ) : media.poster ? (
+          <img class="project-poster" src={media.poster} alt={`${title} preview`} />
+        ) : (
+          <div class="media-placeholder" aria-hidden="true"></div>
+        )}
+        <div class="card-veil"></div>
+      </div>
     </div>
   </div>
 
@@ -69,8 +71,10 @@ const { title, description, tags, links, media } = project;
         gap: 2.5rem;
         padding: 3rem 2rem;
         box-sizing: border-box;
-        margin-bottom: 20vh;
-        margin-top: 20vh;
+        margin-bottom: 30vh;
+        margin-top: 0vh;
+        position: relative;
+        z-index: 1;
     }
 
     /* Odd cards: media on the left, caption fills the space to the right.
@@ -96,18 +100,19 @@ const { title, description, tags, links, media } = project;
         flex: 0 1 60%;
         height: 80%;
         max-height: 80vh;
-        transform: scale(0.94);
+        transform: scale(0.92);
         transition: transform 0.4s ease;
     }
 
     /* Pure CSS hover — deliberately not GSAP. Nothing else ever writes to
-       .media-frame's transform (GSAP only touches .media-visual's), so
-       this has zero competition and no merge-order dependency. Gated the
-       same way the JS tilt effect is, so touch/no-hover devices simply
-       keep the resting scale with no dead hover state to trip over. */
+       .media-frame's transform (GSAP only touches .push-anchor's and
+       .media-visual's), so this has zero competition and no merge-order
+       dependency. Gated the same way the JS tilt effect is, so touch/
+       no-hover devices simply keep the resting scale with no dead hover
+       state to trip over. */
     @media (hover: hover) and (pointer: fine) {
         .media-frame:hover {
-            transform: scale(1);
+            transform: scale(0.92);
         }
     }
 
@@ -115,6 +120,21 @@ const { title, description, tags, links, media } = project;
         .media-frame {
             transition: none;
         }
+    }
+
+    /* Owns ONLY the pointer-driven push translation (x/y). Kept separate
+       from .media-visual (which owns rotation/rotationX/rotationY from the
+       floating idle tween + tilt) so no two GSAP tweens ever fight over
+       the same transform properties on the same element. */
+    .push-anchor {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      /* Required so .media-frame's perspective still reaches .media-visual's
+         rotationX/rotationY — without this, this element's own transform
+         (the push translation) creates a flat 2D boundary that blocks the
+         3D context from passing through to its child. */
+      transform-style: preserve-3d;
     }
 
     .media-visual {
@@ -132,7 +152,7 @@ const { title, description, tags, links, media } = project;
       opacity: 0;
       mix-blend-mode: multiply;
       pointer-events: none;
-      z-index: 1;
+      z-index: 2;
     }
 
     .media-placeholder {
@@ -220,7 +240,7 @@ const { title, description, tags, links, media } = project;
         x,
         y,
         transformOrigin: 'center center',
-        duration: gsap.utils.random(2, 3),
+        duration: 2.3,
         ease: 'sine.inOut',
         scrollTrigger: visual,
         toggleActions: 'restart pause none none',
@@ -295,9 +315,77 @@ const { title, description, tags, links, media } = project;
         }
       );
     }
+
+    // Caption starts invisible. It only fades in once the card has been
+    // substantially in view for a sustained 2 seconds — a real timer, not
+    // tied to scroll position, so quickly scrolling past doesn't trigger
+    // it. Fading OUT, though, mirrors the exact same scroll-scrubbed
+    // schedule the veil re-tints on (20% top → bottom top), so the
+    // caption disappears in lockstep with the rest of the card blurring
+    // back out, rather than on its own timer.
+    const cardContent = visual.closest<HTMLElement>('.project-card')?.querySelector<HTMLElement>('.card-content');
+    if (cardContent) {
+      gsap.set(cardContent, { opacity: 0 });
+
+      let revealTimeout: ReturnType<typeof setTimeout> | undefined;
+
+      const clearRevealTimer = () => {
+        if (revealTimeout) {
+          clearTimeout(revealTimeout);
+          revealTimeout = undefined;
+        }
+      };
+
+      // Entrance: wait 2s of continuous "in view" before fading in.
+      ScrollTrigger.create({
+        trigger: visual,
+        start: 'top 85%',
+        end: 'bottom 15%',
+        onEnter: () => {
+          clearRevealTimer();
+          revealTimeout = setTimeout(() => {
+            gsap.to(cardContent, { opacity: 1, duration: 1, ease: 'power2.out', overwrite: 'auto' });
+          }, 1000);
+        },
+        onEnterBack: () => {
+          clearRevealTimer();
+          revealTimeout = setTimeout(() => {
+            gsap.to(cardContent, { opacity: 1, duration: 1, ease: 'power2.out', overwrite: 'auto' });
+          }, 1000);
+        },
+        onLeave: () => clearRevealTimer(),
+        onLeaveBack: () => clearRevealTimer(),
+      });
+
+      // Exit: scroll-scrubbed, matching the veil's own re-tint window
+      // exactly, so the caption vanishes in sync with the media blurring
+      // back out. This is deliberately NOT a gsap.fromTo() tween — a
+      // fromTo's "from" value gets rendered as soon as scroll progress is
+      // 0, which is true for the ENTIRE time before the card reaches this
+      // zone (i.e. the whole time it's sitting in view). That was
+      // silently forcing opacity back to 1 the instant this was created,
+      // overriding the 2s timer entirely — which is why the caption was
+      // showing up immediately instead of waiting. Driving it manually in
+      // onUpdate, gated by self.isActive, means this only ever touches
+      // opacity while genuinely between start and end; outside that
+      // window it leaves the property alone so the timer stays in
+      // control.
+      ScrollTrigger.create({
+        trigger: visual,
+        start: '20% top',
+        end: 'bottom top',
+        scrub: true,
+        onUpdate: (self) => {
+          if (self.isActive) {
+            gsap.set(cardContent, { opacity: 1 - self.progress });
+          }
+        },
+        onLeave: () => gsap.set(cardContent, { opacity: 0 }),
+      });
+    }
   });
 
-  // Pointer tilt
+  // Pointer tilt + water-push
   const supportsHoverTilt = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const tiltReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -306,30 +394,171 @@ const { title, description, tags, links, media } = project;
       gsap.set(frame, { perspective: 650 });
 
       const visual = frame.querySelector<HTMLElement>('.media-visual');
+      const pushAnchor = frame.querySelector<HTMLElement>('.push-anchor');
       const content = frame.parentElement?.querySelector<HTMLElement>('.card-content') ?? null;
       if (!visual) return;
 
-      const tiltX = gsap.quickTo(visual, 'rotationX', { duration: 0.5, ease: 'power3' });
-      const tiltY = gsap.quickTo(visual, 'rotationY', { duration: 0.5, ease: 'power3' });
-      const contentX = content ? gsap.quickTo(content, 'x', { duration: 0.5, ease: 'power3' }) : null;
-      const contentY = content ? gsap.quickTo(content, 'y', { duration: 0.5, ease: 'power3' }) : null;
+      const TILT_MAX = 4; // deg, hard clamp — tilt can never exceed this in either direction
+      const PUSH_MAX = 70; // px, hard clamp — push can never exceed this in either direction
 
-      frame.addEventListener('pointermove', (e: PointerEvent) => {
+      const TILT_EXTEND = 70; // px beyond the frame's actual edge where the tilt/content "which direction" reading still keeps sharpening, instead of maxing out right at the boundary
+      const APPROACH_BUFFER = 280; // px beyond the frame's edge where the whole field (tilt + push) fades to nothing
+
+      const CONTENT_APPROACH_DURATION = 0.5;
+      const CONTENT_RETURN_DURATION = 1.3;
+
+      // How fast the accumulators climb toward TILT_MAX / PUSH_MAX per
+      // second of continuous full-strength approach — e.g. TILT_MAX / 0.8
+      // means it takes ~0.8s of holding the cursor right at the object to
+      // reach full tilt. Still noticeably softer than an instant snap,
+      // but fast enough to register on a normal hover. Lower the divisor
+      // (e.g. / 0.4) for snappier, raise it (e.g. / 2) for softer.
+      const TILT_APPROACH_RATE_PER_SEC = TILT_MAX / 0.8;
+      const PUSH_APPROACH_RATE_PER_SEC = PUSH_MAX / 0.8;
+
+      // How much of the current tilt/push value survives each second while
+      // retreating — 0.15 means ~15% remains after 1s (a fast-ish decay);
+      // closer to 1 = slower, more lingering drift back to neutral.
+      const TILT_RETURN_DECAY_PER_SEC = 0.2;
+      const PUSH_RETURN_DECAY_PER_SEC = 0.28;
+
+      let previousStrength = 0;
+      let isApproaching = false;
+
+      // Direction/strength read fresh on every pointermove, but NOT
+      // applied to the accumulators there — that was the source of the
+      // "very aggressive, near-instant" feel. A fast mouse movement fires
+      // a burst of pointermove events within a fraction of a second, so
+      // nudging per-event let the accumulator hit its clamp almost
+      // immediately regardless of how small the per-event step was. These
+      // are just the latest reading; the ticker below is what actually
+      // moves the accumulators, at a fixed rate per second of real time
+      // — so total approach speed is bounded by TILT_APPROACH_RATE_PER_SEC
+      // / PUSH_APPROACH_RATE_PER_SEC, not by event frequency.
+      let latestTiltNormX = 0;
+      let latestTiltNormY = 0;
+      let latestPushNormX = 0;
+      let latestPushNormY = 0;
+      let latestStrength = 0;
+
+      // Tilt and push are accumulators, not absolute targets — nudged
+      // gradually toward their max in the "away from cursor" direction
+      // rather than computing a fresh target from scratch each time
+      // (which used to cause a "resets to a starting point" glitch).
+      // Applied to the DOM every animation frame via gsap.ticker below
+      // (using quickSetter, not gsap.to), so both the approach ramp and
+      // the return decay run smoothly over real time — a single thing
+      // writing to these properties once per frame, with no tweens to
+      // fight over them.
+      let tiltRotationX = 0;
+      let tiltRotationY = 0;
+      let pushOffsetX = 0;
+      let pushOffsetY = 0;
+
+      const setRotationX = gsap.quickSetter(visual, 'rotationX', 'deg');
+      const setRotationY = gsap.quickSetter(visual, 'rotationY', 'deg');
+      const setPushX = pushAnchor ? gsap.quickSetter(pushAnchor, 'x', 'px') : null;
+      const setPushY = pushAnchor ? gsap.quickSetter(pushAnchor, 'y', 'px') : null;
+
+      window.addEventListener('pointermove', (e: PointerEvent) => {
         const rect = frame.getBoundingClientRect();
-        const px = (e.clientX - rect.left) / rect.width;
-        const py = (e.clientY - rect.top) / rect.height;
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const halfWidth = rect.width / 2;
+        const halfHeight = rect.height / 2;
+        const dx = e.clientX - centerX;
+        const dy = e.clientY - centerY;
 
-        tiltX(gsap.utils.interpolate(4, -4, py));
-        tiltY(gsap.utils.interpolate(-4, 4, px));
-        contentX?.(gsap.utils.interpolate(-6, 6, px));
-        contentY?.(gsap.utils.interpolate(-6, 6, py));
+        const closestX = gsap.utils.clamp(rect.left, rect.right, e.clientX);
+        const closestY = gsap.utils.clamp(rect.top, rect.bottom, e.clientY);
+        const edgeDx = e.clientX - closestX;
+        const edgeDy = e.clientY - closestY;
+        const edgeDistance = Math.sqrt(edgeDx * edgeDx + edgeDy * edgeDy);
+        const strength = gsap.utils.clamp(0, 1, 1 - edgeDistance / APPROACH_BUFFER);
+
+        const approaching = strength >= previousStrength;
+        previousStrength = strength;
+        isApproaching = approaching && strength > 0.001;
+        latestStrength = strength;
+
+        const contentDuration = approaching ? CONTENT_APPROACH_DURATION : CONTENT_RETURN_DURATION;
+        const contentEase = approaching ? 'power3' : 'power2.out';
+
+        if (strength <= 0.001) {
+          if (content) gsap.to(content, { x: 0, y: 0, duration: contentDuration, ease: contentEase, overwrite: 'auto' });
+          return;
+        }
+
+        // "Which direction is away from the cursor" — recorded for the
+        // ticker to use; not applied here.
+        latestPushNormX = gsap.utils.clamp(-1, 1, dx / halfWidth);
+        latestPushNormY = gsap.utils.clamp(-1, 1, dy / halfHeight);
+        latestTiltNormX = gsap.utils.clamp(-1, 1, dx / (halfWidth + TILT_EXTEND));
+        latestTiltNormY = gsap.utils.clamp(-1, 1, dy / (halfHeight + TILT_EXTEND));
+
+        // Content always tracks the cursor directly, approach or return.
+        if (content) {
+          gsap.to(content, {
+            x: 6 * latestTiltNormX * strength,
+            y: 6 * latestTiltNormY * strength,
+            duration: contentDuration,
+            ease: contentEase,
+            overwrite: 'auto',
+          });
+        }
       });
 
-      frame.addEventListener('pointerleave', () => {
-        tiltX(0);
-        tiltY(0);
-        contentX?.(0);
-        contentY?.(0);
+      // Runs every animation frame regardless of pointer activity.
+      // Approaching: nudges the accumulators toward TILT_MAX/PUSH_MAX in
+      // the latest known direction, at a fixed rate per second (frame-rate
+      // independent via gsap.ticker.deltaRatio) — this is what makes the
+      // approach itself soft/gradual instead of near-instant.
+      // Retreating: decays the accumulators toward 0 the same way.
+      gsap.ticker.add(() => {
+        const dt = gsap.ticker.deltaRatio(60) / 60; // seconds elapsed this tick, frame-rate independent
+
+        if (isApproaching) {
+          tiltRotationX = gsap.utils.clamp(
+            -TILT_MAX,
+            TILT_MAX,
+            tiltRotationX + -latestTiltNormY * latestStrength * TILT_APPROACH_RATE_PER_SEC * dt
+          );
+          tiltRotationY = gsap.utils.clamp(
+            -TILT_MAX,
+            TILT_MAX,
+            tiltRotationY + latestTiltNormX * latestStrength * TILT_APPROACH_RATE_PER_SEC * dt
+          );
+          pushOffsetX = gsap.utils.clamp(
+            -PUSH_MAX,
+            PUSH_MAX,
+            pushOffsetX + -latestPushNormX * latestStrength * PUSH_APPROACH_RATE_PER_SEC * dt
+          );
+          pushOffsetY = gsap.utils.clamp(
+            -PUSH_MAX,
+            PUSH_MAX,
+            pushOffsetY + -latestPushNormY * latestStrength * PUSH_APPROACH_RATE_PER_SEC * dt
+          );
+        } else {
+          const tiltDecay = Math.pow(TILT_RETURN_DECAY_PER_SEC, dt);
+          const pushDecay = Math.pow(PUSH_RETURN_DECAY_PER_SEC, dt);
+
+          tiltRotationX *= tiltDecay;
+          tiltRotationY *= tiltDecay;
+          pushOffsetX *= pushDecay;
+          pushOffsetY *= pushDecay;
+
+          // Snap tiny residual values to exactly 0 so it fully settles
+          // instead of decaying asymptotically forever.
+          if (Math.abs(tiltRotationX) < 0.001) tiltRotationX = 0;
+          if (Math.abs(tiltRotationY) < 0.001) tiltRotationY = 0;
+          if (Math.abs(pushOffsetX) < 0.05) pushOffsetX = 0;
+          if (Math.abs(pushOffsetY) < 0.05) pushOffsetY = 0;
+        }
+
+        setRotationX(tiltRotationX);
+        setRotationY(tiltRotationY);
+        setPushX?.(pushOffsetX);
+        setPushY?.(pushOffsetY);
       });
     });
   }

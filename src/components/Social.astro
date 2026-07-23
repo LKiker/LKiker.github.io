@@ -31,6 +31,7 @@ const profileUrl = platform === 'linkedin'
     text-decoration: none;
     color: inherit;
     font-weight: 500;
+    font-family: var(--font-mono);
     transition: transform 0.2s ease-in-out;
   }
 
@@ -40,12 +41,13 @@ const profileUrl = platform === 'linkedin'
 
   .platform-text {
     text-transform: capitalize;
+    color: var(--color-accent);
   }
 
   /* Unified sizing rules for all icons */
   .social-icon {
     width: 1.25rem;
     height: 1.25rem;
-    fill: white;
+    fill: var(--color-accent);
   }
 </style>

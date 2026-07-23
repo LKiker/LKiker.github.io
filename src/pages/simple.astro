@@ -1,5 +1,5 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import SimpleLayout from "../layouts/SimpleLayout.astro";
 import ProjectListItem from "../components/ProjectListItem.astro";
 import { projects } from '../data/projects';
 import SkillCategory from "../components/SkillCategory.astro";
@@ -8,57 +8,53 @@ import { skillCategories } from "../data/skills";
 const pageTitle = "Simple View";
 ---
 
-<Layout pageTitle={pageTitle}>
-    <div id="smooth-wrapper">
-        <div id="smooth-content">
-            <!-- About Me -->
-            <section class="about-section">
-                <h2>About Me</h2>
-                <p>I build for the web, in VR, and soon in
-                    the physical world, chasing the same curiosity that
-                    keeps me staring into aquariums.</p>
-            </section>
+<SimpleLayout pageTitle={pageTitle}>
+    <!-- About Me -->
+    <section class="about-section">
+        <h2>About Me</h2>
+        <p>I build for the web, in VR, and soon in
+            the physical world, chasing the same curiosity that
+            keeps me staring into aquariums.</p>
+    </section>
 
-            <!-- Skills -->
-            <section class="skills-section">
-                <h2>Skills</h2>
-                {skillCategories.map((category) => (
-                    <SkillCategory category={category} />
-                ))}
-            </section>
+    <!-- Skills -->
+    <section class="skills-section">
+        <h2>Skills</h2>
+        {skillCategories.map((category) => (
+            <SkillCategory category={category} />
+        ))}
+    </section>
 
-            <!-- Projects -->
-            <section class="projects-section">
-                <h2>Projects</h2>
-                {projects.map((project) => (
-                    <ProjectListItem project={project} />
-                ))}
-            </section>
+    <!-- Projects -->
+    <section class="projects-section">
+        <h2>Projects</h2>
+        {projects.map((project) => (
+            <ProjectListItem project={project} />
+        ))}
+    </section>
 
-                <!-- Projects -->
-            <section class="projects-section">
-                <h2>Projects</h2>
-                {projects.map((project) => (
-                    <ProjectListItem project={project} />
-                ))}
-            </section>    <!-- Projects -->
-            <section class="projects-section">
-                <h2>Projects</h2>
-                {projects.map((project) => (
-                    <ProjectListItem project={project} />
-                ))}
-            </section>    <!-- Projects -->
-            <section class="projects-section">
-                <h2>Projects</h2>
-                {projects.map((project) => (
-                    <ProjectListItem project={project} />
-                ))}
-            </section>
+        <!-- Projects -->
+    <section class="projects-section">
+        <h2>Projects</h2>
+        {projects.map((project) => (
+            <ProjectListItem project={project} />
+        ))}
+    </section>    <!-- Projects -->
+    <section class="projects-section">
+        <h2>Projects</h2>
+        {projects.map((project) => (
+            <ProjectListItem project={project} />
+        ))}
+    </section>    <!-- Projects -->
+    <section class="projects-section">
+        <h2>Projects</h2>
+        {projects.map((project) => (
+            <ProjectListItem project={project} />
+        ))}
+    </section>
 
-            <a href="/">Back to Home</a>
-        </div>
-    </div>
-</Layout>
+    <a href="/">Back to Home</a>
+</SimpleLayout>
 
 <style>
     section {
@@ -77,15 +73,3 @@ const pageTitle = "Simple View";
         margin-bottom: 1.5rem;
     }
 </style>
-
-<script>
-    import gsap from 'gsap';
-    import { ScrollTrigger, ScrollSmoother } from 'gsap/all';
-
-    gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
-
-    let smoother = ScrollSmoother.create({
-        wrapper: '#smooth-wrapper',
-        content: '#smooth-content',
-    })
-</script>
