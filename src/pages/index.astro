@@ -9,10 +9,10 @@ const pageTitle = "Portfolio"
 ---
 <Layout pageTitle={pageTitle}>
     <div class="hero">
-        <!--  <HeroSeascape /> -->
-        <a href="/simple/" class="simple-view-link">SIMPLE VIEW</a>
+        <HeroSeascape />
+        <a href="/simple/" class="simple-view-link">simple view</a>
 
-        <div class="hero-content">
+        <div class="hero-content" data-lag="0.3">
             <h1>Landrey Kiker</h1>
             <h2>Web Developer</h2>
             <p>
@@ -50,7 +50,7 @@ const pageTitle = "Portfolio"
     .simple-view-link {
         position: absolute;
         top: 1.5rem;
-        left: 1.5rem;
+        right: 1.5rem;
         z-index: 1; /* above the canvas */
         font-family: var(--font-mono);
         font-size: 0.7rem;
