@@ -6,7 +6,14 @@ interface Props {
 }
 
 const { project } = Astro.props;
-const { title, description, tags, links } = project;
+const { title, description, tags, links, media } = project;
+
+// Simple View skips project.media.video entirely — no player JS ships
+// on this page, so a raw <video> tag would just sit there unplayed.
+// gif and poster are both plain <img> tags, so they render and animate
+// (or not) with zero JS cost, which keeps this page's static, lightweight
+// footprint intact.
+const hasThumb = Boolean(media.gif || media.poster);
 ---
 
 <article class="project-row" data-project-id={project.id} data-category={project.category}>
@@ -25,6 +32,41 @@ const { title, description, tags, links } = project;
             )}
         </div>
     </div>
+
+    {hasThumb && (
+        <div class="media-thumb">
+            {media.gif ? (
+                <>
+                    <img
+                        class="thumb-gif"
+                        src={media.gif.src}
+                        width={media.gif.width}
+                        height={media.gif.height}
+                        alt={`${title} preview`}
+                        loading="lazy"
+                        decoding="async"
+                    />
+                    {media.poster && (
+                        <img
+                            class="thumb-poster thumb-gif-fallback"
+                            src={media.poster}
+                            alt={`${title} preview`}
+                            loading="lazy"
+                            decoding="async"
+                        />
+                    )}
+                </>
+            ) : (
+                <img
+                    class="thumb-poster"
+                    src={media.poster}
+                    alt={`${title} preview`}
+                    loading="lazy"
+                    decoding="async"
+                />
+            )}
+        </div>
+    )}
 
     <p class="description">{description}</p>
 
@@ -89,6 +131,57 @@ const { title, description, tags, links } = project;
 
     .link:hover {
         text-decoration: underline;
+    }
+
+    /* One fixed aspect ratio for every thumbnail, regardless of the
+       source gif/poster's native dimensions. Letting each gif dictate
+       its own box (via its real width/height) is what caused the
+       vertical stretching — a handful of gifs have tall, narrow native
+       ratios, so their boxes ballooned in height. Fixing the box and
+       cropping into it with object-fit: cover keeps every row the same
+       shape, at the cost of cropping some content on unusually tall or
+       wide source media. */
+    .media-thumb {
+        width: 100%;
+        max-width: 420px;
+        aspect-ratio: 16 / 10;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        background: rgba(94, 234, 212, 0.05);
+    }
+
+    .thumb-gif,
+    .thumb-poster {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        /* Bias the crop toward the top of the source image — most of
+           these gifs/screenshots have their focal content (UI, subject)
+           nearer the top than the bottom. Adjust to "center" if a
+           specific thumbnail crops out something important. */
+        object-position: center top;
+        display: block;
+    }
+
+    .thumb-gif-fallback {
+        display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .thumb-gif {
+            display: none;
+        }
+
+        .thumb-gif-fallback {
+            display: block;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .media-thumb {
+            max-width: none;
+        }
     }
 
     .description {
