@@ -17,7 +17,7 @@ Performance and mobile-friendliness were treated as first-class constraints thro
 
 - **Framework:** [Astro](https://astro.build) (static site generation, scoped component styles)
 - **Animation:** [GSAP](https://gsap.com) with ScrollTrigger and ScrollSmoother
-- **Graphics:** Hand-written WebGL fragment shaders (no Three.js), plus Blender-rendered stills for static geometry
+- **Graphics:** Hand-written WebGL fragment shaders (no Three.js)
 - **Fonts:** Space Grotesk (display), IBM Plex Sans (body), IBM Plex Mono (utility and readouts)
 - **Hosting:** GitHub Pages, deployed via GitHub Actions
 
@@ -30,4 +30,12 @@ Performance and mobile-friendliness were treated as first-class constraints thro
 - **Custom loading screen** with a bubble animation that clears once fonts and page load are ready, capped at a hard ceiling so it never stalls indefinitely on a slow connection.
 - **Mobile-first fallback**, redirecting to the simple view under an 800px breakpoint so mobile visitors never pay the cost of the WebGL and GSAP-heavy experience.
 
-## Project Structure
+## Credits
+
+The hero seascape shader is adapted from a CC BY-NC-SA 3.0 licensed ShaderToy seascape scene. Sky rendering and the visible sun disc from the original were stripped out and replaced with custom light shaft and glow effects. If you're referencing this repo, please keep this attribution intact and credit the original ShaderToy source alongside it.
+
+All other shaders (the footer sandbed noise, particle rendering) are original work written for this site.
+
+## License
+
+Personal portfolio project. Feel free to reference the approach, but please don't copy the site wholesale, especially the attributed hero shader.
