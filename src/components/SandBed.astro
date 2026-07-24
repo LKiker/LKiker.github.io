@@ -1,13 +1,17 @@
 ---
 // SandBed.astro
 // A container-scoped WebGL layer that renders a single STATIC frame of
-// procedural sand — ridged dune noise + fine speckle grain + sparse
+// procedural sand — wavy ripple-line dunes + fine speckle grain + sparse
 // mineral glints — meant to sit behind the footer, the visual "seabed"
 // at the very end of the descent.
 //
-// This is an original noise/dune technique written for this component,
-// not derived from the greenbird10 raymarched wave shader used in
-// HeroSeascape.astro — no attribution needed here.
+// The ripple-line noise technique (hash22/gradN2D/grad/sandL, in the
+// script below) is adapted from a CC BY-NC-SA-style ShaderToy raymarched
+// desert-sand shader — only the flat ripple-pattern generator was
+// ported, dropped down to a single static layer with no raymarched
+// terrain, camera path, sky, or mist. Keep that attribution comment
+// intact in the script below, and credit the source again somewhere
+// visible (footer/colophon) if you still have the original link.
 //
 // Unlike HeroSeascape/SunRays, there is NO requestAnimationFrame loop at
 // all: the shader draws exactly once (on load, and again on resize), then
@@ -48,7 +52,14 @@
     uniform vec2 iResolution;
     uniform float uSeed;
 
-    // --- generic value noise (original, not the hero wave technique) ---
+    // --- sand ripple generation ---
+    // The ripple-line technique below (hash22 → gradN2D → grad → sandL)
+    // is adapted from a CC BY-NC-SA-style ShaderToy raymarched desert
+    // shader. Only the flat sand-ripple pattern generator was ported —
+    // the raymarched terrain, camera path, sky, and mist from the
+    // original are not used here at all, since this renders one static
+    // flat frame, not a 3D scene. If you still have the original
+    // ShaderToy link, credit it here alongside the HeroSeascape credit.
 
     float hash(vec2 p) {
       p = fract(p * vec2(443.897, 441.423) + uSeed);
@@ -56,48 +67,115 @@
       return fract((p.x + p.y) * p.x);
     }
 
-    float noise(vec2 p) {
-      vec2 i = floor(p);
-      vec2 f = fract(p);
-      f = f * f * (3.0 - 2.0 * f);
-      float a = hash(i);
-      float b = hash(i + vec2(1.0, 0.0));
-      float c = hash(i + vec2(0.0, 1.0));
-      float d = hash(i + vec2(1.0, 1.0));
-      return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    mat2 rot2(float a) {
+      float c = cos(a);
+      float s = sin(a);
+      return mat2(c, s, -s, c);
     }
 
-    // Folding the noise back on itself produces thin ridge lines instead
-    // of smooth blobs — this is what reads as individual sand ripples
-    // rather than plain cloudy noise.
-    float ridged(vec2 p) {
-      float n = noise(p);
-      return 1.0 - abs(2.0 * n - 1.0);
+    // 2D hash returning a 2D vector, used as the gradient source below.
+    // "Rigid" (non-animated) on purpose — this renders a single static
+    // frame, so there's no time-based rotation like the original had.
+    vec2 hash22(vec2 p) {
+      p += uSeed;
+      float n = sin(dot(p, vec2(113.0, 1.0)));
+      return fract(vec2(2097152.0, 262144.0) * n) * 2.0 - 1.0;
     }
 
-    // A few octaves of ridged noise, each stretched/rotated slightly, so
-    // the ripple bands don't look like one repeating tile.
-    float duneField(vec2 uv) {
-      float val = 0.0;
-      float amp = 0.55;
-      float freq = 1.0;
-      for (int i = 0; i < 4; i++) {
-        vec2 p = uv * freq;
-        p += vec2(p.y, -p.x) * 0.15; // slight shear per octave
-        val += ridged(p) * amp;
-        freq *= 2.05;
-        amp *= 0.5;
-      }
-      return val;
+    // Gradient (Perlin-style) noise. Smoother and more "flowing" than
+    // plain value noise, which is what lets the ripple lines below bend
+    // and wander organically instead of looking like static blobs.
+    float gradN2D(vec2 f) {
+      const vec2 e = vec2(0.0, 1.0);
+      vec2 p = floor(f);
+      f -= p;
+      vec2 w = f * f * (3.0 - 2.0 * f);
+      float c = mix(
+        mix(dot(hash22(p + e.xx), f - e.xx), dot(hash22(p + e.yx), f - e.yx), w.x),
+        mix(dot(hash22(p + e.xy), f - e.xy), dot(hash22(p + e.yy), f - e.yy), w.x),
+        w.y
+      );
+      return c * 0.5 + 0.5;
+    }
+
+    // Repeating triangle-wave gradient — this is what actually produces
+    // individual ripple lines, rather than an undifferentiated noise
+    // field. "offs" shifts the phase, used to offset two overlapping
+    // line sets below.
+    float grad(float x, float offs) {
+      x = abs(fract(x / 6.283 + offs - 0.25) - 0.5) * 2.0;
+      float x2 = clamp(x * x * (-1.0 + 2.0 * x), 0.0, 1.0);
+      x = smoothstep(0.0, 1.0, x);
+      return mix(x, x2, 0.15);
+    }
+
+    // One layer of sand ripples: two copies of the repeating line
+    // gradient, rotated a few degrees apart and perturbed with gradient
+    // noise so the lines read as wavy ripples rather than perfectly
+    // straight bands, then screen-blended together using an underlying
+    // rotated noise field so the two line sets interleave unevenly
+    // instead of forming one uniform grid.
+    float sandL(vec2 p) {
+      vec2 q = rot2(3.14159 / 18.0) * p;
+      q.y += (gradN2D(q * 18.0) - 0.5) * 0.05;
+      float grad1 = grad(q.y * 80.0, 0.0);
+
+      q = rot2(-3.14159 / 20.0) * p;
+      q.y += (gradN2D(q * 12.0) - 0.5) * 0.05;
+      float grad2 = grad(q.y * 80.0, 0.5);
+
+      q = rot2(3.14159 / 4.0) * p;
+      float a2 = dot(sin(q * 12.0 - cos(q.yx * 12.0)), vec2(0.25)) + 0.5;
+      float a1 = 1.0 - a2;
+
+      return 1.0 - (1.0 - grad1 * a1) * (1.0 - grad2 * a2);
+    }
+
+    // Two sandL layers at different rotation/scale, blended by a slower
+    // underlying noise field — this breaks the ripple pattern up into
+    // drifting patches instead of one uniform texture across the frame.
+    float sandField(vec2 p) {
+      p = vec2(p.y - p.x, p.x + p.y) * 0.7071 / 4.0;
+
+      float c1 = sandL(p);
+      vec2 q = rot2(3.14159 / 12.0) * p;
+      float c2 = sandL(q * 1.25);
+
+      return mix(c1, c2, smoothstep(0.1, 0.9, gradN2D(p * 4.0)));
     }
 
     void main() {
       vec2 uv = gl_FragCoord.xy / iResolution.y;
+      float aspect = iResolution.x / iResolution.y;
 
-      // Stretch ripples horizontally so dunes read as elongated ridges
-      // running across the seabed rather than isolated bumps.
-      vec2 rippleUV = vec2(uv.x * 2.2, uv.y * 6.0);
-      float dunes = duneField(rippleUV);
+      // Fake perspective depth: uv.y = 0 (bottom of canvas) is treated as
+      // nearest to the viewer, uv.y = 1 (top of canvas) as the horizon —
+      // the same "camera height / screen row" relationship a raycasted
+      // floor uses. Depth grows sharply as uv.y approaches 1, clamped so
+      // it never actually reaches a divide-by-zero at the horizon line
+      // itself.
+      float depth = 1.0 / max(1.0 - uv.y, 0.035);
+
+      // Perspective-correct world coordinates: a fixed horizontal pixel
+      // distance covers far more world-space the further away it is — the
+      // same reason parallel lines on a road converge toward a vanishing
+      // point. Centering on the canvas's actual midpoint (via aspect)
+      // rather than assuming uv.x is 0..1 keeps the convergence point
+      // centered regardless of the footer's width. This is what makes
+      // the ripple pattern compress and recede into the distance instead
+      // of tiling at one uniform scale all the way up the frame —
+      // mirroring how HeroSeascape's waves compress toward its horizon.
+      float worldX = (uv.x - aspect * 0.5) * depth;
+      vec2 worldP = vec2(worldX, depth) * 0.55; // overall ripple density — raise for finer ripples, lower for coarser
+
+      float dunes = sandField(worldP);
+
+      // How hazy/distant this row is, ramping up with depth. Used below
+      // to wash out ripple contrast and blend toward a fog tone — without
+      // this, the compressed ripples near the horizon would read as harsh
+      // aliasing/moire instead of a soft fade into the distance.
+      float fogAmount = smoothstep(2.0, 8.0, depth);
+      float duneVal = mix(dunes, 0.5, fogAmount);
 
       // Sandy olive/tan palette pulled from a real seabed reference photo
       // (dark mossy-brown in the shadows, khaki mid-tone, pale sandy
@@ -107,23 +185,35 @@
         vec3 sandMid   = vec3(46.0, 51.0, 56.0) / 255.0;
         vec3 sandLight = vec3(71.0, 73.0, 74.0) / 255.0;
 
-      vec3 col = mix(sandDark, sandMid, dunes);
-      col = mix(col, sandLight, pow(dunes, 4.0) * 0.3);
+      vec3 col = mix(sandDark, sandMid, duneVal);
+      col = mix(col, sandLight, pow(duneVal, 4.0) * 0.3 * (1.0 - fogAmount));
 
       // Fine speckle grain gives the flat dune shading actual sand
-      // texture instead of looking like a smooth gradient blob.
+      // texture instead of looking like a smooth gradient blob. Faded out
+      // with distance too — fine sand grain wouldn't be resolvable from
+      // far away in the first place.
       float grain = hash(gl_FragCoord.xy * 0.6);
-      col += (grain - 0.5) * 0.035;
+      col += (grain - 0.5) * 0.035 * (1.0 - fogAmount);
 
       // Sparse mineral glints — a small fraction of grains catch a paler
-      // highlight, like sand catching residual light.
+      // highlight, like sand catching residual light. Also faded with
+      // distance for the same reason as the grain above.
       float sparkle = step(0.9975, hash(floor(gl_FragCoord.xy * 0.5) + 100.0));
-      col = mix(col, sandLight, sparkle * 0.5);
+      col = mix(col, sandLight, sparkle * 0.5 * (1.0 - fogAmount));
+
+      // Blend toward a hazy horizon tone (matching the .ocean gradient's
+      // mid-water stop) as fog increases, so the sand visually dissolves
+      // into distance haze before the alpha fade below removes it
+      // entirely — two things working together instead of a single hard
+      // cutoff doing all the work.
+      vec3 fogColor = vec3(10.0, 63.0, 84.0) / 255.0;
+      col = mix(col, fogColor, fogAmount * 0.6);
 
       // Fade the TOP edge of the canvas to transparent (gl_FragCoord.y
-      // near iResolution.y) so the sandbed dissolves into the .ocean
-      // gradient's abyss stop above the footer instead of showing a
-      // hard seam. Bottom of the canvas (y near 0) stays fully opaque.
+      // near iResolution.y, i.e. uv.y near 1 — the horizon in the depth
+      // model above) so the sandbed dissolves into the .ocean gradient's
+      // abyss stop above the footer instead of showing a hard seam.
+      // Bottom of the canvas (uv.y near 0) stays fully opaque.
       float topFade = smoothstep(0.0, 0.25, 1.0 - uv.y);
 
       gl_FragColor = vec4(col, topFade);

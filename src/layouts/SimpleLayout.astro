@@ -1,7 +1,8 @@
 ---
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
-const { pageTitle, simpleViewHref, simpleViewLabel} = Astro.props;
+
+const { pageTitle, simpleViewHref = '/', simpleViewLabel = 'full view' } = Astro.props;
 ---
 <html lang="en">
   <head>
@@ -15,26 +16,32 @@ const { pageTitle, simpleViewHref, simpleViewLabel} = Astro.props;
     <title>{pageTitle}</title>
   </head>
   <body>
-    <div id="smooth-wrapper">
-      <div id="smooth-content">
-        <div class="ocean">
-          <slot />
-          <Footer simpleViewHref='/' simpleViewLabel='full view'/>
-        </div>
+    <div class="ocean simple-page">
+      <div class="simple-container">
+        <slot />
       </div>
+      <Footer simpleViewHref={simpleViewHref} simpleViewLabel={simpleViewLabel} />
     </div>
   </body>
 </html>
 
-<script>
-    import gsap from 'gsap';
-    import { ScrollTrigger, ScrollSmoother } from 'gsap/all';
+<style>
+  /* Plain native scrolling on purpose — no ScrollSmoother/GSAP anywhere
+     in this layout. This view exists specifically as the lightweight,
+     low-motion, recruiter-friendly alternative to the immersive main
+     page, so it should scroll exactly the way a normal webpage (or a
+     resume) does: instantly, natively, with zero JS in the loop. */
+  .simple-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
 
-    gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
-
-    let smoother = ScrollSmoother.create({
-        wrapper: '#smooth-wrapper',
-        content: '#smooth-content',
-        smooth: 1.2,
-    })
-</script>
+  .simple-container {
+    flex: 1;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+</style>

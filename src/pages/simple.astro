@@ -1,53 +1,102 @@
 ---
 import SimpleLayout from "../layouts/SimpleLayout.astro";
 import ProjectListItem from "../components/ProjectListItem.astro";
-import { projects } from '../data/projects';
 import SkillCategory from "../components/SkillCategory.astro";
+import { projects } from "../data/projects";
 import { skillCategories } from "../data/skills";
 
-const pageTitle = "Simple View";
+const pageTitle = "Landrey Kiker — Portfolio";
+
+// Same explicit ordering the immersive page uses, so both views stay in
+// sync without needing to touch this file whenever projects.ts changes.
+const sortedProjects = [...projects].sort((a, b) => a.order - b.order);
 ---
 
 <SimpleLayout pageTitle={pageTitle}>
-    <!-- About Me -->
-    <section class="about-section">
-        <h2>About Me</h2>
-        <p>I build for the web, in VR, and the physical world.</p>
-    </section>
+  <header class="intro">
+    <h1>Landrey Kiker</h1>
+    <h2>Web Developer</h2>
+    <p>I build for the web, in VR, and the physical world.</p>
+  </header>
 
-    <!-- Skills -->
-    <section class="skills-section">
-        <h2>Skills</h2>
-        {skillCategories.map((category) => (
-            <SkillCategory category={category} />
-        ))}
-    </section>
+  <section class="section" aria-labelledby="skills-heading">
+    <h2 id="skills-heading" class="section-heading">Skills</h2>
+    <div class="skills-grid">
+      {skillCategories.map((category) => (
+        <SkillCategory category={category} />
+      ))}
+    </div>
+  </section>
 
-    <!-- Projects -->
-    <section class="projects-section">
-        <h2>Projects</h2>
-        {projects.map((project) => (
-            <ProjectListItem project={project} />
-        ))}
-    </section>
-
-    <a href="/">Back to Home</a>
+  <section class="section" aria-labelledby="projects-heading">
+    <h2 id="projects-heading" class="section-heading">Projects</h2>
+    <div class="projects-list">
+      {sortedProjects.map((project) => (
+        <ProjectListItem project={project} />
+      ))}
+    </div>
+  </section>
 </SimpleLayout>
 
 <style>
-    section {
-        max-width: 720px;
-        margin: 0 auto;
-        padding: 3rem 1.5rem;
-    }
+  /* Generous, resume-like vertical rhythm — sections are separated by a
+     thin rule rather than heavy visual weight, so the eye can scan top
+     to bottom quickly instead of getting stopped by each section. */
+  .intro {
+    padding: 4rem 0 2.5rem;
+  }
 
-    .skills-section {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
+  .intro h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.8rem, 5vw, 2.4rem);
+    letter-spacing: -0.01em;
+    color: var(--color-surface-text);
+    margin: 0;
+  }
 
-    h2 {
-        margin-bottom: 1.5rem;
-    }
+  .intro h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 0.85rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0.6rem 0 1rem;
+  }
+
+  .intro p {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-muted-text);
+    max-width: 46ch;
+    margin: 0;
+  }
+
+  .section {
+    padding: 2.5rem 0;
+    border-top: 1px solid rgba(94, 234, 212, 0.15);
+  }
+
+  .section-heading {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 1.5rem;
+  }
+
+  .skills-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
 </style>
