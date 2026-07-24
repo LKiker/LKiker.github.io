@@ -8,6 +8,18 @@ import { projects } from '../data/projects';
 const pageTitle = "Portfolio"
 ---
 <Layout pageTitle={pageTitle}>
+    <script is:inline>
+        // Mobile visitors get the simple view instead of the full
+        // immersive experience. Runs synchronously (is:inline, not a
+        // deferred module) and sits first in document order, so it
+        // fires before HeroSeascape's WebGL setup or any GSAP scripts
+        // even start. Same 800px breakpoint used for the mobile layout
+        // in ProjectCard.astro, kept consistent across the site.
+        if (window.matchMedia('(max-width: 800px)').matches) {
+            window.location.replace('/simple/');
+        }
+    </script>
+
     <div class="hero">
         <HeroSeascape />
         <a href="/simple/" class="simple-view-link">simple view</a>
@@ -114,4 +126,3 @@ const pageTitle = "Portfolio"
         margin-bottom: 0;
     }
 </style>
-
