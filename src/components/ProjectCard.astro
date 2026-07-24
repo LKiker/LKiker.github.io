@@ -285,7 +285,7 @@ const gifAspectRatio = media.gif ? `${media.gif.width} / ${media.gif.height}` : 
            between cards or a hard-locked 100vh — let the card size to
            its actual content (gif/media + caption stacked) and just set
            a floor so short cards still get a full-screen "arrival" feel. */
-        .project-card,
+        .project-card:nth-of-type(odd),
         .project-card:nth-of-type(even) {
             flex-direction: column;
             height: auto;
@@ -317,6 +317,14 @@ const gifAspectRatio = media.gif ? `${media.gif.width} / ${media.gif.height}` : 
         }
 
         .card-content {
+            /* Base rule's flex: 1 1 260px was written for the desktop row
+               layout, where flex-grow fills leftover *width*. In this
+               column layout the main axis is vertical, so that same
+               flex-grow: 1 was stretching the box to fill leftover
+               *height* inside the card's min-height: 100vh — hence the
+               dead space under the text. flex-grow: 0 lets it size to
+               its own content instead. */
+            flex: 0 1 auto;
             max-width: none;
             width: 100%;
         }
