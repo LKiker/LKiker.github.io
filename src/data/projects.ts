@@ -5,6 +5,8 @@ import cityImage from "../assets/images/city.png?url";
 import officeVideo from "../assets/videos/office.mp4";
 import officeImage from "../assets/images/office.png?url";
 import molecularLens from "../assets/images/molecularlens.gif";
+import ripplesimulation from "../assets/images/ripplesimulation.gif";
+import unityshaders from "../assets/images/unityshaders.gif";
 
 export interface Project {
     id: string;                // slug, used for routing/anchors if needed
@@ -64,8 +66,7 @@ export const projects: Project[] = [
             github: 'https://github.com/LKiker/ripple-simulation',
         },
         media: {
-            video: treesVideo,
-            poster: treesImage,
+            gif: ripplesimulation,
         },
         featured: true,
     },
@@ -81,8 +82,7 @@ export const projects: Project[] = [
             github: 'https://github.com/LKiker/unity-shader-showcase',
         },
         media: {
-            video: cityVideo,
-            poster: cityImage,
+            gif: unityshaders,
         },
         featured: true,
     },
