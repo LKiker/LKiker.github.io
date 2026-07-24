@@ -1,0 +1,176 @@
+---
+// LoadScreen.astro — drop as the very first child inside <body>, before
+// everything else, so it paints before SunRays/HeroSeascape/hero content.
+---
+
+<div id="load-screen" class="load-screen">
+  <div class="bubble-field" aria-hidden="true">
+    <span class="bubble"></span>
+    <span class="bubble"></span>
+    <span class="bubble"></span>
+    <span class="bubble"></span>
+    <span class="bubble"></span>
+    <span class="bubble"></span>
+    <span class="bubble"></span>
+    <span class="bubble"></span>
+  </div>
+  <span class="load-label">diving in…</span>
+</div>
+
+<style>
+  .load-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 200; /* above SunRays (0) and hero content (2) */
+    background: var(--color-abyss);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .bubble-field {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .bubble {
+    position: absolute;
+    left: 50%;
+    top: 55%; /* spawn just below the label's baseline */
+    width: var(--bubble-size, 8px);
+    height: var(--bubble-size, 8px);
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at 30% 30%,
+      rgba(255, 255, 255, 0.6),
+      var(--color-accent) 60%,
+      transparent 100%
+    );
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+
+  .load-label {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--color-accent);
+    text-transform: uppercase;
+  }
+</style>
+
+<style is:global>
+  /* Locks scroll purely via CSS, active from the very first paint — no
+     JS timing gap, so there's no flash of scrollbars before the overlay
+     takes over. As soon as #load-screen is removed from the DOM (in
+     reveal()'s onComplete), this selector stops matching and scroll
+     unlocks automatically, no manual re-enabling needed.
+     :has() support: Chrome 105+, Safari 15.4+, Firefox 121+ — for any
+     older browser, the JS fallback below (document.body.style.overflow)
+     still covers it, just with the original flash on that narrow slice
+     of traffic. */
+  body:has(#load-screen) {
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  import gsap from 'gsap';
+
+  const screen = document.getElementById('load-screen');
+  const bubbles = screen
+    ? (Array.from(screen.querySelectorAll('.bubble')) as HTMLElement[])
+    : [];
+  const label = screen?.querySelector('.load-label') as HTMLElement | null;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.body.style.overflow = 'hidden';
+
+  let bubbleLoop: gsap.core.Tween | null = null;
+
+  function startBubbles() {
+    if (prefersReducedMotion || bubbles.length === 0) return;
+
+    bubbles.forEach((bubble) => {
+      // Randomize size per-bubble so the stream reads as organic rather
+      // than a uniform row of identical dots.
+      const size = gsap.utils.random(5, 12);
+      bubble.style.setProperty('--bubble-size', `${size}px`);
+    });
+
+    // A single looping tween across all bubbles, staggered so each one
+    // starts its rise at a different moment. repeatRefresh re-rolls the
+    // randomized rise distance/duration/drift/delay every cycle so the
+    // stream never looks like it's repeating on a fixed loop.
+    bubbleLoop = gsap.to(bubbles, {
+      y: () => gsap.utils.random(-220, -320),
+      x: () => gsap.utils.random(-40, 40),
+      opacity: 0,
+      duration: () => gsap.utils.random(1.6, 2.6),
+      ease: 'power1.out',
+      stagger: {
+        each: 0.35,
+        repeat: -1,
+        from: 'start',
+      },
+      repeatRefresh: true,
+      onStart: function () {
+        // Fade each bubble in quickly right as its cycle begins, since the
+        // base state (opacity: 0) is also the tween's end state.
+        gsap.fromTo(
+          this.targets(),
+          { opacity: 0, y: 0, x: 0 },
+          { opacity: 0.85, duration: 0.25 },
+        );
+      },
+    });
+  }
+
+  function reveal() {
+    if (!screen || !label) {
+      screen?.remove();
+      document.body.style.overflow = '';
+      return;
+    }
+
+    if (prefersReducedMotion) {
+      screen.remove();
+      document.body.style.overflow = '';
+      return;
+    }
+
+    bubbleLoop?.kill();
+
+    const tl = gsap.timeline({
+      onComplete: () => {
+        screen.remove();
+        document.body.style.overflow = '';
+        window.dispatchEvent(new Event('resize')); // let ScrollTrigger re-measure
+      },
+    });
+
+    // Let whatever bubbles are mid-flight keep drifting up and out while
+    // the label and whole screen dissolve underneath them, rather than
+    // snapping everything to a hard stop.
+    tl.to(label, { opacity: 0, duration: 0.3 }, 0)
+      .to(bubbles, { opacity: 0, y: '-=60', duration: 0.6, ease: 'power1.out' }, 0)
+      .to(screen, { opacity: 0, duration: 0.5, ease: 'power1.inOut' }, 0.3);
+  }
+
+  startBubbles();
+
+  Promise.race([
+    Promise.all([
+      document.fonts ? document.fonts.ready : Promise.resolve(),
+      new Promise((res) => window.addEventListener('load', res, { once: true })),
+    ]),
+    new Promise((res) => setTimeout(res, 2500)), // ceiling: never stall past this
+  ]).then(() => {
+    setTimeout(reveal, 400); // floor: avoid a flash on very fast loads
+  });
+</script>

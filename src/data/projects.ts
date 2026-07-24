@@ -3,7 +3,8 @@ import treesImage from "../assets/images/trees.png?url";
 import cityVideo from "../assets/videos/city.mp4";
 import cityImage from "../assets/images/city.png?url";
 import officeVideo from "../assets/videos/office.mp4";
-import officeimage from "../assets/images/office.png?url";
+import officeImage from "../assets/images/office.png?url";
+import molecularLens from "../assets/images/molecularlens.gif";
 
 export interface Project {
     id: string;                // slug, used for routing/anchors if needed
@@ -19,7 +20,17 @@ export interface Project {
     };
     media: {
         video?: string;           // path/URL for immersive page
-        poster?: string;          // fallback image while video loads
+        gif?: {                   // animated alternative to video — no play/pause control,
+                                   // so pair with `poster` if you want a still fallback for
+                                   // prefers-reduced-motion. Width/height (from the un-suffixed
+                                   // image import, not `?url`) let the card size itself to the
+                                   // gif's native aspect ratio instead of forcing a fixed box.
+            src: string;
+            width: number;
+            height: number;
+        };
+        poster?: string;          // fallback image while video loads, or reduced-motion
+                                   // fallback when paired with `gif`
         edgeColor?: string;       // for the video edge-dissolve match, if not scroll-derived
     };
     featured: boolean;          // could let simple.astro filter/sort featured-first
@@ -37,8 +48,7 @@ export const projects: Project[] = [
             github: 'https://github.com/LKiker/MolecularLensAR',
         },
         media: {
-            video: officeVideo,
-            poster: officeimage,
+            gif: molecularLens,
         },
         featured: true,
     },
@@ -73,6 +83,40 @@ export const projects: Project[] = [
         media: {
             video: cityVideo,
             poster: cityImage,
+        },
+        featured: true,
+    },
+
+    {
+        id: 'aquarium filtration system',
+        order: 4,
+        title: "Aquarium Filtration System",
+        category: 'other',
+        description: "75 gallon aquarium stand and sump designed for handling the flow and filtration of African Cichlids.",
+        tags: [],
+        links: {
+            github: 'https://github.com/LKiker',
+        },
+        media: {
+            video: officeVideo,
+            poster: officeImage,
+        },
+        featured: true,
+    },
+
+    {
+        id: 'this site',
+        order: 4,
+        title: "This Website",
+        category: 'other',
+        description: "Ocean themed portfolio site built in Astro and utilizing GSAP animations.",
+        tags: [],
+        links: {
+            github: 'https://github.com/LKiker',
+        },
+        media: {
+            video: treesVideo,
+            poster: treesImage,
         },
         featured: true,
     },

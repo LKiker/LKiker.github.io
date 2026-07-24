@@ -7,10 +7,28 @@ interface Props {
 
 const { project } = Astro.props;
 const { title, description, tags, links, media } = project;
+
+// Media area click target: same destination as the "View on GitHub" link
+// next to it, falling back to the live link if there's no GitHub link.
+const cardHref = links.github ?? links.live ?? null;
+
+// Lets a gif-based card size its frame to the gif's own proportions
+// instead of the fixed 80vh-capped box video/poster cards use — set as a
+// custom property so plain CSS (no JS) can react to it via aspect-ratio.
+const gifAspectRatio = media.gif ? `${media.gif.width} / ${media.gif.height}` : undefined;
 ---
 
 <article class="project-card" data-project-id={project.id} data-category={project.category} data-lag="0.5">
-  <div class="media-frame" data-parallax-depth="0.15">
+  <div
+    class="media-frame"
+    data-parallax-depth="0.15"
+    data-href={cardHref ?? undefined}
+    data-has-gif={media.gif ? 'true' : undefined}
+    style={gifAspectRatio ? `--gif-aspect-ratio: ${gifAspectRatio};` : undefined}
+    role={cardHref ? 'link' : undefined}
+    tabindex={cardHref ? 0 : undefined}
+    aria-label={cardHref ? `${title} — open project link` : undefined}
+  >
     <div class="push-anchor">
       <div class="media-visual">
         {media.video ? (
@@ -24,6 +42,27 @@ const { title, description, tags, links, media } = project;
           >
             <source src={media.video} type="video/mp4" />
           </video>
+        ) : media.gif ? (
+          <>
+            <img
+              class="project-gif"
+              src={media.gif.src}
+              width={media.gif.width}
+              height={media.gif.height}
+              alt={`${title} preview`}
+            />
+            {/* GIFs can't be paused via an element attribute the way <video>
+                can, so if a still poster is available, swap to it under
+                prefers-reduced-motion instead of leaving the animation
+                running regardless of that preference. */}
+            {media.poster && (
+              <img
+                class="project-poster project-gif-fallback"
+                src={media.poster}
+                alt={`${title} preview`}
+              />
+            )}
+          </>
         ) : media.poster ? (
           <img class="project-poster" src={media.poster} alt={`${title} preview`} />
         ) : (
@@ -89,10 +128,27 @@ const { title, description, tags, links, media } = project;
     }
 
     .project-video,
-    .project-poster {
+    .project-poster,
+    .project-gif {
           width: 100%;
           height: 100%;
           object-fit: cover;
+    }
+
+    /* Hidden by default; only shown in place of the animated gif when the
+       user prefers reduced motion (see prefers-reduced-motion block below). */
+    .project-gif-fallback {
+        display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .project-gif {
+            display: none;
+        }
+
+        .project-gif-fallback {
+            display: block;
+        }
     }
 
     .media-frame {
@@ -102,6 +158,29 @@ const { title, description, tags, links, media } = project;
         max-height: 80vh;
         transform: scale(0.92);
         transition: transform 0.8s ease;
+    }
+
+    /* Gif cards: derive height from width via the gif's own aspect ratio
+       (set inline as --gif-aspect-ratio) rather than the fixed 80%/80vh
+       box above, so the frame matches what's actually playing instead of
+       cropping it via object-fit. max-height stays on as a clamp for
+       unusually tall (portrait) gifs — past that point the image will
+       letterbox/crop slightly rather than blowing out the row's height. */
+    .media-frame[data-has-gif] {
+        height: auto;
+        aspect-ratio: var(--gif-aspect-ratio);
+    }
+
+    /* Clickable affordance — only when the card actually has a link to go
+       to (data-href present). Focus-visible ring for keyboard users since
+       this is a div acting as a link (role="link"/tabindex added inline). */
+    .media-frame[data-href] {
+        cursor: pointer;
+    }
+
+    .media-frame[data-href]:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 4px;
     }
 
     /* Pure CSS hover — deliberately not GSAP. Nothing else ever writes to
@@ -383,6 +462,28 @@ const { title, description, tags, links, media } = project;
         onLeave: () => gsap.set(cardContent, { opacity: 0 }),
       });
     }
+  });
+
+  // Media-frame click-through: same destination as the card's "View on
+  // GitHub" (or "View live") link. Reads data-href set server-side from
+  // links.github ?? links.live, so there's a single source of truth for
+  // the destination rather than duplicating link logic in JS.
+  gsap.utils.toArray<HTMLElement>('.media-frame[data-href]').forEach((frame) => {
+    const href = frame.dataset.href;
+    if (!href) return;
+
+    const openLink = () => {
+      window.open(href, '_blank', 'noopener,noreferrer');
+    };
+
+    frame.addEventListener('click', openLink);
+
+    frame.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openLink();
+      }
+    });
   });
 
   // Pointer tilt + water-push

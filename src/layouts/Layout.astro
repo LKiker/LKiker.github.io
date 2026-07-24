@@ -1,7 +1,7 @@
 ---
 import Footer from '../components/Footer.astro';
 import DepthGauge from "../components/DepthGauge.astro";
-import OceanParticles from "../components/OceanParticles.astro";
+import LoadScreeen from "../components/LoadScreen.astro";
 import '../styles/global.css';
 const { pageTitle, simpleViewHref, simpleViewLabel } = Astro.props;
 ---
@@ -17,6 +17,7 @@ const { pageTitle, simpleViewHref, simpleViewLabel } = Astro.props;
     <title>{pageTitle}</title>
   </head>
   <body>
+    <LoadScreeen />
     <DepthGauge />
     <div id="smooth-wrapper">
       <div id="smooth-content">
