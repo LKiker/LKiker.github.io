@@ -281,15 +281,39 @@ const gifAspectRatio = media.gif ? `${media.gif.width} / ${media.gif.height}` : 
     }
 
     @media (max-width: 800px) {
+        /* Stacked layout doesn't need the desktop's 30vh scroll buffer
+           between cards or a hard-locked 100vh — let the card size to
+           its actual content (gif/media + caption stacked) and just set
+           a floor so short cards still get a full-screen "arrival" feel. */
         .project-card,
         .project-card:nth-of-type(even) {
             flex-direction: column;
-            gap: 1.5rem;
+            height: auto;
+            min-height: 100vh;
+            gap: 1.25rem;
+            padding: 4rem 1.25rem;
+            margin-bottom: 8rem;
         }
 
         .media-frame {
             flex: 0 1 auto;
             width: 100%;
+            /* Desktop's height: 80%/max-height: 80vh (set on the base
+               .media-frame rule) assumed a fixed-height row with content
+               beside it, not above/below — on a narrow column that would
+               eat most of the card and leave the caption crushed into a
+               sliver underneath. Let height come from content instead. */
+            height: auto;
+            max-height: none;
+        }
+
+        /* Gif cards already get their own aspect-ratio from
+           --gif-aspect-ratio (see .media-frame[data-has-gif] above) at
+           any breakpoint, so this only needs to give video/poster cards
+           — which have no intrinsic ratio to size by — a sane fallback
+           box instead of an unbounded one. */
+        .media-frame:not([data-has-gif]) {
+            aspect-ratio: 16 / 9;
         }
 
         .card-content {
