@@ -1,12 +1,13 @@
 ---
 ---
 <div class="depth-gauge">
-  <span class="depth-label">depth</span>
+  <div class="depth-header">
+    <span class="depth-label">depth</span>
+    <span class="depth-value"><span id="depth-number">0.0</span><span class="depth-unit">m</span></span>
+  </div>
   <div class="depth-track">
     <div class="depth-fill" id="depth-fill"></div>
-    <div class="depth-marker" id="depth-marker">
-      <span class="depth-value"><span id="depth-number">0.0</span><span class="depth-unit">m</span></span>
-    </div>
+    <div class="depth-marker" id="depth-marker"></div>
   </div>
 </div>
 
@@ -27,11 +28,31 @@
     gap: 0.6rem;
   }
 
+  /* Fixed header block: label and number stay put at the top of the
+     gauge instead of the number traveling down the track with the
+     marker. */
+  .depth-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    flex-shrink: 0;
+  }
+
   .depth-label {
     font-size: 0.6rem;
     opacity: 0.6;
     text-transform: uppercase;
-    flex-shrink: 0;
+  }
+
+  .depth-value {
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .depth-unit {
+    font-size: 0.6rem;
   }
 
   .depth-track {
@@ -42,33 +63,40 @@
     background: rgba(94, 234, 212, 0.15);
   }
 
+  /* height: 100% + scaleY(progress) instead of animating height directly
+     — height is a layout property and forces a reflow every scroll
+     frame; transform: scaleY() is compositor-only. transform-origin:
+     top keeps it growing downward from the top of the track, matching
+     what the old height-based version looked like. */
   .depth-fill {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 0%;
+    height: 100%;
     background: var(--color-accent);
     border-radius: 2px;
-    will-change: height;
+    transform: scaleY(0);
+    transform-origin: top;
+    will-change: transform;
   }
 
+  /* Marker is now just a small dot traveling on the track, since the
+     number itself lives up in .depth-header instead of riding along.
+     Positioned via translateY on top of the -50%/-50% centering
+     transform (both folded into one transform string in JS) instead of
+     animating the `top` property, which is layout-triggering. */
   .depth-marker {
     position: absolute;
-    left: 1.1rem;
+    left: 50%;
     top: 0;
-    transform: translateY(-50%);
-    white-space: nowrap;
-    will-change: top;
-  }
-
-  .depth-value {
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
-  .depth-unit {
-    font-size: 0.6rem;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 6px 1px rgba(94, 234, 212, 0.6);
+    transform: translate(-50%, -50%);
+    will-change: transform;
   }
 </style>
 
@@ -80,7 +108,17 @@
   const numberEl = document.getElementById('depth-number');
   const fillEl = document.getElementById('depth-fill');
   const markerEl = document.getElementById('depth-marker');
+  const trackEl = document.querySelector<HTMLElement>('.depth-track');
   let ticking = false;
+
+  // Cached track height in px, used to convert progress (0..1) into a
+  // pixel offset for the marker's translateY. Only needs to be
+  // re-measured on resize, not every scroll frame.
+  let trackHeight = trackEl?.clientHeight ?? 0;
+
+  function measureTrack() {
+    trackHeight = trackEl?.clientHeight ?? 0;
+  }
 
   function updateDepth() {
     const scrollTop = getVirtualScrollY(); // was: window.scrollY
@@ -89,8 +127,10 @@
     const depth = progress * MAX_DEPTH;
 
     if (numberEl) numberEl.textContent = depth.toFixed(1);
-    if (fillEl) fillEl.style.height = `${progress * 100}%`;
-    if (markerEl) markerEl.style.top = `${progress * 100}%`;
+    // scaleY/translateY instead of height/top — compositor-only, no
+    // layout thrash on every scroll tick.
+    if (fillEl) fillEl.style.transform = `scaleY(${progress})`;
+    if (markerEl) markerEl.style.transform = `translate(-50%, -50%) translateY(${progress * trackHeight}px)`;
 
     ticking = false;
   }
@@ -103,5 +143,6 @@
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', measureTrack, { passive: true });
   updateDepth();
 </script>

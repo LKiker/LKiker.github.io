@@ -78,11 +78,14 @@ const gifAspectRatio = media.gif ? `${media.gif.width} / ${media.gif.height}` : 
     <p class="description">{description}</p>
 
     {tags.length > 0 && (
-      <ul class="tags">
-        {tags.map((tag) => (
-          <li class="tag">{tag}</li>
-        ))}
-      </ul>
+      <div class="tools-section">
+        <span class="tools-label">Built with</span>
+        <ul class="tags">
+          {tags.map((tag) => (
+            <li class="tag">{tag}</li>
+          ))}
+        </ul>
+      </div>
     )}
 
     <div class="links">
@@ -255,13 +258,28 @@ const gifAspectRatio = media.gif ? `${media.gif.width} / ${media.gif.height}` : 
         border-radius: 8px;
     }
 
+    .tools-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        margin: 0.5rem 0;
+    }
+
+    .tools-label {
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        opacity: 0.6;
+    }
+
     .tags {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
         list-style: none;
         padding: 0;
-        margin: 0.5rem 0;
+        margin: 0;
     }
 
     .tag {
@@ -523,6 +541,80 @@ const gifAspectRatio = media.gif ? `${media.gif.width} / ${media.gif.height}` : 
   const tiltReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (supportsHoverTilt && !tiltReducedMotion) {
+    const TILT_MAX = 4; // deg, hard clamp — tilt can never exceed this in either direction
+    const PUSH_MAX = 70; // px, hard clamp — push can never exceed this in either direction
+
+    const TILT_EXTEND = 70; // px beyond the frame's actual edge where the tilt/content "which direction" reading still keeps sharpening, instead of maxing out right at the boundary
+    const APPROACH_BUFFER = 280; // px beyond the frame's edge where the whole field (tilt + push) fades to nothing
+
+    const CONTENT_APPROACH_DURATION = 0.5;
+    const CONTENT_RETURN_DURATION = 1.3;
+
+    // How fast the accumulators climb toward TILT_MAX / PUSH_MAX per
+    // second of continuous full-strength approach — e.g. TILT_MAX / 0.8
+    // means it takes ~0.8s of holding the cursor right at the object to
+    // reach full tilt. Still noticeably softer than an instant snap,
+    // but fast enough to register on a normal hover. Lower the divisor
+    // (e.g. / 0.4) for snappier, raise it (e.g. / 2) for softer.
+    const TILT_APPROACH_RATE_PER_SEC = TILT_MAX / 0.8;
+    const PUSH_APPROACH_RATE_PER_SEC = PUSH_MAX / 0.8;
+
+    // How much of the current tilt/push value survives each second while
+    // retreating — 0.15 means ~15% remains after 1s (a fast-ish decay);
+    // closer to 1 = slower, more lingering drift back to neutral.
+    const TILT_RETURN_DECAY_PER_SEC = 0.2;
+    const PUSH_RETURN_DECAY_PER_SEC = 0.28;
+
+    // How much strength must change, frame to frame, before the
+    // approach/retreat DIRECTION is allowed to flip. Without this, tiny
+    // pointer jitter (a fraction of a pixel) made `strength` wobble up
+    // and down, which flipped which quickTo pair (approach vs. return —
+    // different durations/easing) was driving the content box every
+    // single frame, producing a visible shake. Below this threshold the
+    // previous direction is kept as-is.
+    const STRENGTH_HYSTERESIS = 0.015;
+
+    // A single shared pointer position, updated by ONE window listener
+    // instead of one per card. With N cards the old version registered
+    // N pointermove listeners AND called getBoundingClientRect() N times
+    // on every single mouse move — this reads the pointer position once,
+    // regardless of how many project cards exist on the page.
+    let pointerX = 0;
+    let pointerY = 0;
+    let hasPointer = false;
+
+    window.addEventListener(
+      'pointermove',
+      (e: PointerEvent) => {
+        pointerX = e.clientX;
+        pointerY = e.clientY;
+        hasPointer = true;
+      },
+      { passive: true }
+    );
+
+    interface TiltCard {
+      frame: HTMLElement;
+      rect: DOMRect;
+      inView: boolean;
+      previousStrength: number;
+      approachDirection: boolean;
+      tiltRotationX: number;
+      tiltRotationY: number;
+      pushOffsetX: number;
+      pushOffsetY: number;
+      setRotationX: (v: number) => void;
+      setRotationY: (v: number) => void;
+      setPushX: ((v: number) => void) | null;
+      setPushY: ((v: number) => void) | null;
+      contentApproachX: ((v: number) => void) | null;
+      contentApproachY: ((v: number) => void) | null;
+      contentReturnX: ((v: number) => void) | null;
+      contentReturnY: ((v: number) => void) | null;
+    }
+
+    const cards: TiltCard[] = [];
+
     gsap.utils.toArray<HTMLElement>('.media-frame').forEach((frame) => {
       gsap.set(frame, { perspective: 650 });
 
@@ -531,168 +623,177 @@ const gifAspectRatio = media.gif ? `${media.gif.width} / ${media.gif.height}` : 
       const content = frame.parentElement?.querySelector<HTMLElement>('.card-content') ?? null;
       if (!visual) return;
 
-      const TILT_MAX = 4; // deg, hard clamp — tilt can never exceed this in either direction
-      const PUSH_MAX = 70; // px, hard clamp — push can never exceed this in either direction
+      // gsap.quickSetter's return type is typed as the generic `Function`
+      // in GSAP's own .d.ts, which TS won't structurally match against
+      // `(v: number) => void` — cast at the call site rather than
+      // loosening TiltCard's field types.
+      const setRotationX = gsap.quickSetter(visual, 'rotationX', 'deg') as (v: number) => void;
+      const setRotationY = gsap.quickSetter(visual, 'rotationY', 'deg') as (v: number) => void;
+      const setPushX = pushAnchor ? (gsap.quickSetter(pushAnchor, 'x', 'px') as (v: number) => void) : null;
+      const setPushY = pushAnchor ? (gsap.quickSetter(pushAnchor, 'y', 'px') as (v: number) => void) : null;
 
-      const TILT_EXTEND = 70; // px beyond the frame's actual edge where the tilt/content "which direction" reading still keeps sharpening, instead of maxing out right at the boundary
-      const APPROACH_BUFFER = 280; // px beyond the frame's edge where the whole field (tilt + push) fades to nothing
+      // One quickTo pair per direction (approach/return) since each
+      // needs its own duration/ease — reused every frame instead of a
+      // fresh gsap.to() tween getting created on every pointer reading.
+      // overwrite: 'auto' matters here specifically because approach and
+      // return are TWO SEPARATE tweens both targeting the same x/y
+      // properties — without it, switching from one to the other can
+      // leave both briefly active and writing conflicting values to the
+      // same property in the same frame, which reads as a shake.
+      // Cast for the same reason as the quickSetters above: GSAP's own
+      // typings return a generic `Function`, which TS won't structurally
+      // match against `(v: number) => void`.
+      const contentApproachX = content ? (gsap.quickTo(content, 'x', { duration: CONTENT_APPROACH_DURATION, ease: 'power3', overwrite: 'auto' }) as (v: number) => void) : null;
+      const contentApproachY = content ? (gsap.quickTo(content, 'y', { duration: CONTENT_APPROACH_DURATION, ease: 'power3', overwrite: 'auto' }) as (v: number) => void) : null;
+      const contentReturnX = content ? (gsap.quickTo(content, 'x', { duration: CONTENT_RETURN_DURATION, ease: 'power2.out', overwrite: 'auto' }) as (v: number) => void) : null;
+      const contentReturnY = content ? (gsap.quickTo(content, 'y', { duration: CONTENT_RETURN_DURATION, ease: 'power2.out', overwrite: 'auto' }) as (v: number) => void) : null;
 
-      const CONTENT_APPROACH_DURATION = 0.5;
-      const CONTENT_RETURN_DURATION = 1.3;
+      cards.push({
+        frame,
+        rect: frame.getBoundingClientRect(),
+        inView: false,
+        previousStrength: 0,
+        approachDirection: false,
+        tiltRotationX: 0,
+        tiltRotationY: 0,
+        pushOffsetX: 0,
+        pushOffsetY: 0,
+        setRotationX,
+        setRotationY,
+        setPushX,
+        setPushY,
+        contentApproachX,
+        contentApproachY,
+        contentReturnX,
+        contentReturnY,
+      });
+    });
 
-      // How fast the accumulators climb toward TILT_MAX / PUSH_MAX per
-      // second of continuous full-strength approach — e.g. TILT_MAX / 0.8
-      // means it takes ~0.8s of holding the cursor right at the object to
-      // reach full tilt. Still noticeably softer than an instant snap,
-      // but fast enough to register on a normal hover. Lower the divisor
-      // (e.g. / 0.4) for snappier, raise it (e.g. / 2) for softer.
-      const TILT_APPROACH_RATE_PER_SEC = TILT_MAX / 0.8;
-      const PUSH_APPROACH_RATE_PER_SEC = PUSH_MAX / 0.8;
+    // Rects only need refreshing when layout could actually have shifted
+    // a card's position — on scroll or resize — not on every pointermove
+    // and not every single animation frame regardless of activity.
+    let rectRefreshScheduled = false;
+    function refreshRects() {
+      for (const card of cards) {
+        card.rect = card.frame.getBoundingClientRect();
+      }
+      rectRefreshScheduled = false;
+    }
+    function scheduleRectRefresh() {
+      if (rectRefreshScheduled) return;
+      rectRefreshScheduled = true;
+      requestAnimationFrame(refreshRects);
+    }
 
-      // How much of the current tilt/push value survives each second while
-      // retreating — 0.15 means ~15% remains after 1s (a fast-ish decay);
-      // closer to 1 = slower, more lingering drift back to neutral.
-      const TILT_RETURN_DECAY_PER_SEC = 0.2;
-      const PUSH_RETURN_DECAY_PER_SEC = 0.28;
+    window.addEventListener('scroll', scheduleRectRefresh, { passive: true });
+    window.addEventListener('resize', scheduleRectRefresh, { passive: true });
 
-      let previousStrength = 0;
-      let isApproaching = false;
+    // Cards well outside the viewport skip all tilt math entirely — no
+    // reason to keep computing pointer distance for a card scrolled far
+    // out of reach. rootMargin extends the "in view" zone past the
+    // literal viewport edge so the effect is already primed by the time
+    // a card scrolls into APPROACH_BUFFER range of the cursor.
+    const visibilityObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const card = cards.find((c) => c.frame === entry.target);
+          if (card) card.inView = entry.isIntersecting;
+        }
+      },
+      { rootMargin: `${APPROACH_BUFFER}px` }
+    );
+    cards.forEach((card) => visibilityObserver.observe(card.frame));
 
-      // Direction/strength read fresh on every pointermove, but NOT
-      // applied to the accumulators there — that was the source of the
-      // "very aggressive, near-instant" feel. A fast mouse movement fires
-      // a burst of pointermove events within a fraction of a second, so
-      // nudging per-event let the accumulator hit its clamp almost
-      // immediately regardless of how small the per-event step was. These
-      // are just the latest reading; the ticker below is what actually
-      // moves the accumulators, at a fixed rate per second of real time
-      // — so total approach speed is bounded by TILT_APPROACH_RATE_PER_SEC
-      // / PUSH_APPROACH_RATE_PER_SEC, not by event frequency.
-      let latestTiltNormX = 0;
-      let latestTiltNormY = 0;
-      let latestPushNormX = 0;
-      let latestPushNormY = 0;
-      let latestStrength = 0;
+    // ONE ticker callback shared across every card, instead of one per
+    // card — and each card's math only runs at all when it's in view.
+    gsap.ticker.add(() => {
+      if (!hasPointer) return;
+      const dt = gsap.ticker.deltaRatio(60) / 60; // seconds elapsed this tick, frame-rate independent
 
-      // Tilt and push are accumulators, not absolute targets — nudged
-      // gradually toward their max in the "away from cursor" direction
-      // rather than computing a fresh target from scratch each time
-      // (which used to cause a "resets to a starting point" glitch).
-      // Applied to the DOM every animation frame via gsap.ticker below
-      // (using quickSetter, not gsap.to), so both the approach ramp and
-      // the return decay run smoothly over real time — a single thing
-      // writing to these properties once per frame, with no tweens to
-      // fight over them.
-      let tiltRotationX = 0;
-      let tiltRotationY = 0;
-      let pushOffsetX = 0;
-      let pushOffsetY = 0;
+      for (const card of cards) {
+        if (!card.inView) continue;
 
-      const setRotationX = gsap.quickSetter(visual, 'rotationX', 'deg');
-      const setRotationY = gsap.quickSetter(visual, 'rotationY', 'deg');
-      const setPushX = pushAnchor ? gsap.quickSetter(pushAnchor, 'x', 'px') : null;
-      const setPushY = pushAnchor ? gsap.quickSetter(pushAnchor, 'y', 'px') : null;
-
-      window.addEventListener('pointermove', (e: PointerEvent) => {
-        const rect = frame.getBoundingClientRect();
+        const rect = card.rect;
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
         const halfWidth = rect.width / 2;
         const halfHeight = rect.height / 2;
-        const dx = e.clientX - centerX;
-        const dy = e.clientY - centerY;
+        const dx = pointerX - centerX;
+        const dy = pointerY - centerY;
 
-        const closestX = gsap.utils.clamp(rect.left, rect.right, e.clientX);
-        const closestY = gsap.utils.clamp(rect.top, rect.bottom, e.clientY);
-        const edgeDx = e.clientX - closestX;
-        const edgeDy = e.clientY - closestY;
+        const closestX = gsap.utils.clamp(rect.left, rect.right, pointerX);
+        const closestY = gsap.utils.clamp(rect.top, rect.bottom, pointerY);
+        const edgeDx = pointerX - closestX;
+        const edgeDy = pointerY - closestY;
         const edgeDistance = Math.sqrt(edgeDx * edgeDx + edgeDy * edgeDy);
         const strength = gsap.utils.clamp(0, 1, 1 - edgeDistance / APPROACH_BUFFER);
 
-        const approaching = strength >= previousStrength;
-        previousStrength = strength;
-        isApproaching = approaching && strength > 0.001;
-        latestStrength = strength;
+        // Direction only flips when the strength change clears the
+        // hysteresis band — small pointer noise just keeps whatever
+        // direction was already active, instead of thrashing between
+        // the approach/return quickTo pairs every frame.
+        if (strength > card.previousStrength + STRENGTH_HYSTERESIS) {
+          card.approachDirection = true;
+        } else if (strength < card.previousStrength - STRENGTH_HYSTERESIS) {
+          card.approachDirection = false;
+        }
+        const approaching = card.approachDirection;
+        card.previousStrength = strength;
+        const isApproaching = approaching && strength > 0.001;
 
-        const contentDuration = approaching ? CONTENT_APPROACH_DURATION : CONTENT_RETURN_DURATION;
-        const contentEase = approaching ? 'power3' : 'power2.out';
+        const pushNormX = gsap.utils.clamp(-1, 1, dx / halfWidth);
+        const pushNormY = gsap.utils.clamp(-1, 1, dy / halfHeight);
+        const tiltNormX = gsap.utils.clamp(-1, 1, dx / (halfWidth + TILT_EXTEND));
+        const tiltNormY = gsap.utils.clamp(-1, 1, dy / (halfHeight + TILT_EXTEND));
 
+        // Content always tracks the cursor directly (or returns to 0),
+        // approach or return, via whichever quickTo pair matches the
+        // current direction.
         if (strength <= 0.001) {
-          if (content) gsap.to(content, { x: 0, y: 0, duration: contentDuration, ease: contentEase, overwrite: 'auto' });
-          return;
+          const setX = approaching ? card.contentApproachX : card.contentReturnX;
+          const setY = approaching ? card.contentApproachY : card.contentReturnY;
+          setX?.(0);
+          setY?.(0);
+        } else if (approaching) {
+          card.contentApproachX?.(6 * tiltNormX * strength);
+          card.contentApproachY?.(6 * tiltNormY * strength);
+        } else {
+          card.contentReturnX?.(6 * tiltNormX * strength);
+          card.contentReturnY?.(6 * tiltNormY * strength);
         }
 
-        // "Which direction is away from the cursor" — recorded for the
-        // ticker to use; not applied here.
-        latestPushNormX = gsap.utils.clamp(-1, 1, dx / halfWidth);
-        latestPushNormY = gsap.utils.clamp(-1, 1, dy / halfHeight);
-        latestTiltNormX = gsap.utils.clamp(-1, 1, dx / (halfWidth + TILT_EXTEND));
-        latestTiltNormY = gsap.utils.clamp(-1, 1, dy / (halfHeight + TILT_EXTEND));
-
-        // Content always tracks the cursor directly, approach or return.
-        if (content) {
-          gsap.to(content, {
-            x: 6 * latestTiltNormX * strength,
-            y: 6 * latestTiltNormY * strength,
-            duration: contentDuration,
-            ease: contentEase,
-            overwrite: 'auto',
-          });
-        }
-      });
-
-      // Runs every animation frame regardless of pointer activity.
-      // Approaching: nudges the accumulators toward TILT_MAX/PUSH_MAX in
-      // the latest known direction, at a fixed rate per second (frame-rate
-      // independent via gsap.ticker.deltaRatio) — this is what makes the
-      // approach itself soft/gradual instead of near-instant.
-      // Retreating: decays the accumulators toward 0 the same way.
-      gsap.ticker.add(() => {
-        const dt = gsap.ticker.deltaRatio(60) / 60; // seconds elapsed this tick, frame-rate independent
-
+        // Tilt and push are accumulators, not absolute targets — nudged
+        // gradually toward their max in the "away from cursor" direction
+        // rather than computing a fresh target from scratch each time.
+        // Applied to the DOM via quickSetter below, so both the approach
+        // ramp and the return decay run smoothly over real time.
         if (isApproaching) {
-          tiltRotationX = gsap.utils.clamp(
-            -TILT_MAX,
-            TILT_MAX,
-            tiltRotationX + -latestTiltNormY * latestStrength * TILT_APPROACH_RATE_PER_SEC * dt
-          );
-          tiltRotationY = gsap.utils.clamp(
-            -TILT_MAX,
-            TILT_MAX,
-            tiltRotationY + latestTiltNormX * latestStrength * TILT_APPROACH_RATE_PER_SEC * dt
-          );
-          pushOffsetX = gsap.utils.clamp(
-            -PUSH_MAX,
-            PUSH_MAX,
-            pushOffsetX + -latestPushNormX * latestStrength * PUSH_APPROACH_RATE_PER_SEC * dt
-          );
-          pushOffsetY = gsap.utils.clamp(
-            -PUSH_MAX,
-            PUSH_MAX,
-            pushOffsetY + -latestPushNormY * latestStrength * PUSH_APPROACH_RATE_PER_SEC * dt
-          );
+          card.tiltRotationX = gsap.utils.clamp(-TILT_MAX, TILT_MAX, card.tiltRotationX + -tiltNormY * strength * TILT_APPROACH_RATE_PER_SEC * dt);
+          card.tiltRotationY = gsap.utils.clamp(-TILT_MAX, TILT_MAX, card.tiltRotationY + tiltNormX * strength * TILT_APPROACH_RATE_PER_SEC * dt);
+          card.pushOffsetX = gsap.utils.clamp(-PUSH_MAX, PUSH_MAX, card.pushOffsetX + -pushNormX * strength * PUSH_APPROACH_RATE_PER_SEC * dt);
+          card.pushOffsetY = gsap.utils.clamp(-PUSH_MAX, PUSH_MAX, card.pushOffsetY + -pushNormY * strength * PUSH_APPROACH_RATE_PER_SEC * dt);
         } else {
           const tiltDecay = Math.pow(TILT_RETURN_DECAY_PER_SEC, dt);
           const pushDecay = Math.pow(PUSH_RETURN_DECAY_PER_SEC, dt);
 
-          tiltRotationX *= tiltDecay;
-          tiltRotationY *= tiltDecay;
-          pushOffsetX *= pushDecay;
-          pushOffsetY *= pushDecay;
+          card.tiltRotationX *= tiltDecay;
+          card.tiltRotationY *= tiltDecay;
+          card.pushOffsetX *= pushDecay;
+          card.pushOffsetY *= pushDecay;
 
           // Snap tiny residual values to exactly 0 so it fully settles
           // instead of decaying asymptotically forever.
-          if (Math.abs(tiltRotationX) < 0.001) tiltRotationX = 0;
-          if (Math.abs(tiltRotationY) < 0.001) tiltRotationY = 0;
-          if (Math.abs(pushOffsetX) < 0.05) pushOffsetX = 0;
-          if (Math.abs(pushOffsetY) < 0.05) pushOffsetY = 0;
+          if (Math.abs(card.tiltRotationX) < 0.001) card.tiltRotationX = 0;
+          if (Math.abs(card.tiltRotationY) < 0.001) card.tiltRotationY = 0;
+          if (Math.abs(card.pushOffsetX) < 0.05) card.pushOffsetX = 0;
+          if (Math.abs(card.pushOffsetY) < 0.05) card.pushOffsetY = 0;
         }
 
-        setRotationX(tiltRotationX);
-        setRotationY(tiltRotationY);
-        setPushX?.(pushOffsetX);
-        setPushY?.(pushOffsetY);
-      });
+        card.setRotationX(card.tiltRotationX);
+        card.setRotationY(card.tiltRotationY);
+        card.setPushX?.(card.pushOffsetX);
+        card.setPushY?.(card.pushOffsetY);
+      }
     });
   }
 </script>

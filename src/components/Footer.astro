@@ -148,3 +148,27 @@ const currentYear = new Date().getFullYear();
     }
   }
 </style>
+
+<script>
+  // Plain anchor-jump (href="#") moves the browser's native scroll
+  // position, but ScrollSmoother renders scroll via a transform on
+  // #smooth-content rather than native scrolling — so a native jump
+  // desyncs the two, which is what caused the "only goes halfway" bug.
+  // Routing the click through the smoother's own scrollTo() keeps both
+  // in sync. Looked up at click time (not at module load) since the
+  // smoother instance may not exist yet when this script first runs.
+  import { ScrollSmoother } from 'gsap/all';
+
+  const backLink = document.querySelector<HTMLAnchorElement>('.back-link');
+
+  backLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const smoother = ScrollSmoother.get();
+    if (smoother) {
+      smoother.scrollTo(0, true);
+    } else {
+      // Fallback for the rare case no smoother instance exists.
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+</script>

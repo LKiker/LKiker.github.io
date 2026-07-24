@@ -1,12 +1,10 @@
-import treesVideo from "../assets/videos/trees.mp4";
-import treesImage from "../assets/images/trees.png?url";
-import cityVideo from "../assets/videos/city.mp4";
-import cityImage from "../assets/images/city.png?url";
 import officeVideo from "../assets/videos/office.mp4";
 import officeImage from "../assets/images/office.png?url";
 import molecularLens from "../assets/images/molecularlens.gif";
 import ripplesimulation from "../assets/images/ripplesimulation.gif";
 import unityshaders from "../assets/images/unityshaders.gif";
+import sump from "../assets/images/sump.jpg";
+import portfoliosite from "../assets/images/portfoliosite.gif";
 
 export interface Project {
     id: string;                // slug, used for routing/anchors if needed
@@ -45,7 +43,7 @@ export const projects: Project[] = [
         title: "Molecular Lens AR",
         category: 'vr',
         description: "Mixed-reality educational tool built for the Meta Quest 3. It places a 3D protein model into the users physical environment and enables interactive learning through direct manipulation, click-into-model exploration, and a built-in multiple-choice quiz.",
-        tags: [],
+        tags: ["Unity", "C#", "Meta Quest 3", "Mixed Reality"],
         links: {
             github: 'https://github.com/LKiker/MolecularLensAR',
         },
@@ -61,7 +59,7 @@ export const projects: Project[] = [
         title: "Ripple Simulation",
         category: 'web',
         description: "Interactive 2D and 3D water ripple simulation built from scratch using WebGL. It visualizes real-time wave propagation on a heightmap and allows users to inject energy through mouse interaction, demonstrating core physics and real-time graphics concepts.",
-        tags: [],
+        tags: ["WebGL", "GLSL", "JavaScript"],
         links: {
             github: 'https://github.com/LKiker/ripple-simulation',
         },
@@ -77,7 +75,7 @@ export const projects: Project[] = [
         title: "Unity URP Shader Showcase",
         category: 'other',
         description: "Stylized shaders (Toon, Water) rendered on a custom robot model using Unity URP.",
-        tags: [],
+        tags: ["Unity", "URP", "Shader Graph", "C#"],
         links: {
             github: 'https://github.com/LKiker/unity-shader-showcase',
         },
@@ -93,30 +91,28 @@ export const projects: Project[] = [
         title: "Aquarium Filtration System",
         category: 'other',
         description: "75 gallon aquarium stand and sump designed for handling the flow and filtration of African Cichlids.",
-        tags: [],
+        tags: ["Woodworking", "Plumbing Design", "Aquascaping", "Fish-keeping"],
         links: {
             github: 'https://github.com/LKiker',
         },
         media: {
-            video: officeVideo,
-            poster: officeImage,
+            gif: sump,
         },
         featured: true,
     },
 
     {
-        id: 'this site',
+        id: 'Portfolio site',
         order: 4,
-        title: "This Website",
+        title: "Portfolio Website",
         category: 'other',
-        description: "Ocean themed portfolio site built in Astro and utilizing GSAP animations.",
-        tags: [],
+        description: "This underwater themed portfolio site built in Astro and utilizing GSAP animations.",
+        tags: ["Astro", "TypeScript", "GSAP", "WebGL"],
         links: {
-            github: 'https://github.com/LKiker',
+            github: 'https://github.com/LKiker/Lkiker.github.io',
         },
         media: {
-            video: treesVideo,
-            poster: treesImage,
+            gif: portfoliosite,
         },
         featured: true,
     },
